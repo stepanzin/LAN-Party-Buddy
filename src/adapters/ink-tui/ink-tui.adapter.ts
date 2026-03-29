@@ -1,11 +1,12 @@
 import React from 'react';
 import { render } from 'ink';
-import type { UserInterfacePort } from '../../ports/user-interface.port';
+import type { UserInterfacePort, WelcomeChoice } from '../../ports/user-interface.port';
 import type { MonitorPort } from '../../ports/monitor.port';
 import type { MidiDevice } from '../../ports/device-discovery.port';
 import type { ConfigEditorPort } from '../../ports/config-editor.port';
 import { TuiStore } from './tui-store';
 import { App } from './app';
+import { WelcomeScreen } from './components/welcome-screen';
 
 export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
   private unmount?: () => void;
@@ -16,7 +17,7 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
     private configEditor?: ConfigEditorPort,
   ) {}
 
-  // --- MonitorPort ---
+  // --- Lifecycle ---
 
   start(): void {
     const { unmount, waitUntilExit } = render(
@@ -29,14 +30,30 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
     this.exitPromise = waitUntilExit();
   }
 
-  /** Resolves when user quits the TUI (via Q or useApp().exit()) */
+  stop(): void {
+    this.unmount?.();
+  }
+
   waitForExit(): Promise<void> {
     return this.exitPromise ?? Promise.resolve();
   }
 
-  stop(): void {
-    this.unmount?.();
+  // --- First-run ---
+
+  showWelcome(): Promise<WelcomeChoice> {
+    return new Promise((resolveChoice) => {
+      const { unmount } = render(
+        React.createElement(WelcomeScreen, {
+          onSelect: (choice: WelcomeChoice) => {
+            unmount();
+            resolveChoice(choice);
+          },
+        }),
+      );
+    });
   }
+
+  // --- MonitorPort ---
 
   onMidiActivity(cc: number, value: number, mappedValue: number, ruleLabel?: string): void {
     this.store.pushActivity({
@@ -102,7 +119,7 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
     this.store.setSystemMessage(message);
   }
 
-  logMapping(cc: number, originalValue: number, mappedValue: number): void {
+  logMapping(_cc: number, _originalValue: number, _mappedValue: number): void {
     // Already handled by onMidiActivity → pushLog
   }
 }

@@ -3,6 +3,7 @@ import type { MidiOutputPort } from '../ports/midi-output.port.ts';
 import type { DeviceDiscoveryPort } from '../ports/device-discovery.port.ts';
 import type { UserInterfacePort } from '../ports/user-interface.port.ts';
 import type { ConfigReaderPort } from '../ports/config-reader.port.ts';
+import type { ConfigWriterPort } from '../ports/config-writer.port.ts';
 import type { StateStorePort } from '../ports/state-store.port.ts';
 import type { MonitorPort } from '../ports/monitor.port.ts';
 import type { ConfigEditorPort } from '../ports/config-editor.port.ts';
@@ -12,12 +13,18 @@ import { buildRules, buildMacros } from './rule-compiler.ts';
 import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '../domain/mapping-engine.ts';
 import type { MidiCC } from '../domain/midi-message.ts';
 
+const DEFAULT_CONFIG: AppConfig = {
+  deviceName: 'MIDI Mapper Output',
+  rules: [],
+};
+
 export type MidiMapperDeps = {
   readonly midiInput: MidiInputPort;
   readonly midiOutput: MidiOutputPort;
   readonly deviceDiscovery: DeviceDiscoveryPort;
   readonly ui: UserInterfacePort;
   readonly configReader: ConfigReaderPort;
+  readonly configWriter: ConfigWriterPort;
   readonly stateStore: StateStorePort;
   readonly monitor?: MonitorPort;
   readonly configEditor?: ConfigEditorPort;
@@ -36,8 +43,16 @@ export class MidiMapperApp {
     this.configEditorService = service;
   }
 
-  async run(configSource: string): Promise<void> {
-    const config = await this.deps.configReader.load(configSource);
+  async run(configPath: string, configExists: boolean): Promise<void> {
+    // First-run: show welcome, create default config
+    if (!configExists) {
+      const choice = await this.deps.ui.showWelcome();
+      if (choice === 'mapper') {
+        await this.deps.configWriter.save(configPath, DEFAULT_CONFIG);
+      }
+    }
+
+    const config = await this.deps.configReader.load(configPath);
     this.currentConfig = config;
     let rules = buildRules(config);
     let macros = buildMacros(config);
@@ -52,7 +67,6 @@ export class MidiMapperApp {
         rules = buildRules(newConfig);
         macros = buildMacros(newConfig);
 
-        // Recreate virtual port if deviceName changed
         if (newConfig.deviceName !== currentDeviceName) {
           currentDeviceName = newConfig.deviceName;
           try {
@@ -66,6 +80,8 @@ export class MidiMapperApp {
       };
     }
 
+    // Start UI and enter device loop
+    this.deps.ui.start();
     await this.deviceLoop(currentDeviceName, () => rules, () => macros);
   }
 
@@ -106,15 +122,13 @@ export class MidiMapperApp {
       await this.deps.stateStore.save({ lastDevice: selectedDevice.name });
       this.deps.ui.showInfo(`Proxying MIDI signals -> ${deviceName}\nDevice: ${selectedDevice.name}`);
 
-      // Notify monitor of device selection
       this.deps.monitor?.setDevice(selectedDevice.name);
 
       let engineState: EngineState = INITIAL_ENGINE_STATE;
       this.deps.midiInput.onMessage((msg: MidiCC) => {
-        // MIDI Learn: intercept next message
         if (this.configEditorService?.isMidiLearnActive) {
           this.configEditorService.feedMidiLearn(msg.cc);
-          return; // skip normal processing
+          return;
         }
 
         const { result, nextState } = processMidiMessage(msg, getRules(), getMacros(), engineState);
@@ -126,7 +140,6 @@ export class MidiMapperApp {
 
         this.deps.ui.logMapping(result.log.cc, result.log.originalValue, result.log.mappedValue);
 
-        // Push to monitor
         if (this.deps.monitor) {
           const matched = (result.log as any).matched ?? (getRules()[msg.cc.toString()] !== undefined);
           const macroOutputs: ReadonlyArray<{ readonly cc: number; readonly value: number }> =
@@ -153,7 +166,6 @@ export class MidiMapperApp {
       if (disconnected) {
         this.deps.ui.showWarning(`Device "${selectedDevice.name}" disconnected.`);
         this.deps.monitor?.setConnectionStatus(false);
-        // Cancel any active MIDI learn so the UI doesn't stay stuck
         if (this.configEditorService?.isMidiLearnActive) {
           this.configEditorService.cancelMidiLearn();
         }

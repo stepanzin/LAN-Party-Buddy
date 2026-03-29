@@ -76,6 +76,10 @@ function createMockUI(selectedDeviceIndex = 0) {
   const messages: string[] = [];
   const mappingLogs: Array<{ cc: number; original: number; mapped: number }> = [];
   const port: UserInterfacePort = {
+    start: mock(() => {}),
+    stop: mock(() => {}),
+    waitForExit: mock(() => Promise.resolve()),
+    showWelcome: mock(() => Promise.resolve('mapper' as const)),
     selectDevice: mock((_devices: MidiDevice[]) => Promise.resolve(selectedDeviceIndex)),
     showInfo: mock((msg: string) => { messages.push(`[INFO] ${msg}`); }),
     showWarning: mock((msg: string) => { messages.push(`[WARN] ${msg}`); }),
@@ -153,12 +157,15 @@ describe('E2E: Full Application Flow', () => {
     const configAdapter = new YamlConfigAdapter();
     const stateAdapter = new JsonStateAdapter(opts.statePath ?? join(tmpDir, 'state.json'));
 
+    const mockConfigWriter = { save: mock(() => Promise.resolve()) };
+
     const deps: MidiMapperDeps = {
       midiInput: mockInput.input,
       midiOutput: mockOutput.port,
       deviceDiscovery: discovery,
       ui: ui.port,
       configReader: configAdapter,
+      configWriter: mockConfigWriter,
       stateStore: stateAdapter,
     };
 
@@ -179,7 +186,7 @@ describe('E2E: Full Application Flow', () => {
       statePath,
     });
 
-    const runPromise = app.run(configPath);
+    const runPromise = app.run(configPath, true);
 
     // Wait for the app to wire up message handler and disconnect
     await runPromise;
@@ -227,7 +234,7 @@ describe('E2E: Full Application Flow', () => {
       statePath,
     });
 
-    await run1.app.run(run1.configPath);
+    await run1.app.run(run1.configPath, true);
 
     // selectDevice was called in run 1
     expect(run1.ui.port.selectDevice).toHaveBeenCalledWith(DEVICES);
@@ -243,7 +250,7 @@ describe('E2E: Full Application Flow', () => {
       statePath,
     });
 
-    await run2.app.run(run2.configPath);
+    await run2.app.run(run2.configPath, true);
 
     // selectDevice should NOT have been called in run 2
     expect(run2.ui.port.selectDevice).not.toHaveBeenCalled();
@@ -261,7 +268,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // CC 4, linear 0-127 -> 0-127
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 0 });
@@ -292,7 +299,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // Press CC 64, value 127 -> toggle ON -> output 127
     mockInput.simulateMessage({ channel: 0, cc: 64, value: 127 });
@@ -322,7 +329,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // CC 11 has smoothing=3. Send 3 values: 60, 90, 120
     // Buffer after each:
@@ -356,7 +363,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // CC 1 has a macro that also outputs to CC 74.
     // CC 1 has no dedicated rule, so it passes through unmapped.
@@ -384,7 +391,7 @@ describe('E2E: Full Application Flow', () => {
 
     const nonexistentPath = join(tmpDir, 'does-not-exist.yaml');
 
-    await expect(app.run(nonexistentPath)).rejects.toThrow();
+    await expect(app.run(nonexistentPath, true)).rejects.toThrow();
   });
 
   // -----------------------------------------------------------------------
@@ -395,7 +402,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // Mix of different CCs
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 50 });   // expression
@@ -432,7 +439,7 @@ describe('E2E: Full Application Flow', () => {
       statePath,
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // Verify state file was created in nested path
     const stateAdapter = new JsonStateAdapter(statePath);
@@ -448,7 +455,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // CC 80 is not in any rule or macro
     mockInput.simulateMessage({ channel: 0, cc: 80, value: 42 });

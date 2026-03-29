@@ -62,6 +62,10 @@ function createMockDeviceDiscovery(
 
 function createMockUI(selectedDeviceIndex = 0): UserInterfacePort {
   return {
+    start: mock(() => {}),
+    stop: mock(() => {}),
+    waitForExit: mock(() => Promise.resolve()),
+    showWelcome: mock(() => Promise.resolve('mapper' as const)),
     selectDevice: mock((_devices: MidiDevice[]) => Promise.resolve(selectedDeviceIndex)),
     showInfo: mock((_msg: string) => {}),
     showWarning: mock((_msg: string) => {}),
@@ -107,16 +111,19 @@ function createMockDeps(overrides: MockDepsOverrides = {}) {
   const configReader = overrides.configReader ?? createMockConfigReader(defaultConfig);
   const stateStore = overrides.stateStore ?? createMockStateStore();
 
+  const configWriter = { save: mock(() => Promise.resolve()) };
+
   const deps: MidiMapperDeps = {
     midiInput: mockInput.input,
     midiOutput,
     deviceDiscovery,
     ui,
     configReader,
+    configWriter,
     stateStore,
   };
 
-  return { deps, mockInput, midiOutput, deviceDiscovery, ui, configReader, stateStore };
+  return { deps, mockInput, midiOutput, deviceDiscovery, ui, configReader, configWriter, stateStore };
 }
 
 // --- Smoke Tests ---
@@ -131,7 +138,7 @@ describe('Smoke: MidiMapperApp', () => {
     const app = new MidiMapperApp(deps, 10);
 
     // Should not throw
-    await app.run('config.yaml');
+    await app.run('config.yaml', true);
 
     expect(ui.showError).toHaveBeenCalledWith(
       'No MIDI input devices found. Connect a device and try again.',
@@ -151,19 +158,22 @@ describe('Smoke: MidiMapperApp', () => {
     const ui = createMockUI(0);
     const stateStore = createMockStateStore();
 
+    const configWriter = { save: mock(() => Promise.resolve()) };
+
     const deps: MidiMapperDeps = {
       midiInput: midiInput.input,
       midiOutput,
       deviceDiscovery,
       ui,
       configReader: yamlAdapter,
+      configWriter,
       stateStore,
     };
 
     const app = new MidiMapperApp(deps, 10);
 
     // Should not throw when loading and running with real config.yaml
-    await app.run(configPath);
+    await app.run(configPath, true);
 
     // Verify it actually opened ports (config was loaded and processed)
     expect(midiInput.input.open).toHaveBeenCalledWith(0);
@@ -204,7 +214,7 @@ describe('Smoke: MidiMapperApp', () => {
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui, configReader });
     const app = new MidiMapperApp(deps, 10);
 
-    await app.run('config.yaml');
+    await app.run('config.yaml', true);
 
     // Send messages through each rule and the macro
     const testMessages = [
@@ -243,7 +253,7 @@ describe('Smoke: MidiMapperApp', () => {
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui });
     const app = new MidiMapperApp(deps, 10);
 
-    await app.run('config.yaml');
+    await app.run('config.yaml', true);
 
     // Fire 100 messages rapidly
     for (let i = 0; i < 100; i++) {
@@ -274,7 +284,7 @@ describe('Smoke: MidiMapperApp', () => {
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui, stateStore });
     const app = new MidiMapperApp(deps, 10);
 
-    await app.run('config.yaml');
+    await app.run('config.yaml', true);
 
     // Verify disconnect warning was shown
     expect(ui.showWarning).toHaveBeenCalledWith('Device "Test Controller" disconnected.');
