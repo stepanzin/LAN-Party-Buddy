@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 import { unlink } from 'node:fs/promises';
-import { YamlConfigAdapter, parseConfig } from '../../src/adapters/yaml-config.adapter';
+import { parse as parseYaml } from 'yaml';
+import { YamlConfigAdapter, YamlConfigWriterAdapter, parseConfig } from '../../src/adapters/yaml-config.adapter';
+import type { AppConfig } from '../../src/domain/config';
 
 // ---------------------------------------------------------------------------
 // parseConfig (unit tests — moved from config-loader.test.ts)
@@ -730,5 +732,63 @@ rules:
       await expect(adapter.load(tmp)).rejects.toThrow(/deviceName/);
       await unlink(tmp);
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// YamlConfigWriterAdapter.save()
+// ---------------------------------------------------------------------------
+describe('YamlConfigWriterAdapter', () => {
+  const sampleConfig: AppConfig = {
+    deviceName: 'Writer Test',
+    rules: [
+      {
+        cc: 1,
+        label: 'Mod Wheel',
+        inputMin: 0,
+        inputMax: 127,
+        outputMin: 0,
+        outputMax: 127,
+        curve: 'linear',
+      },
+    ],
+    macros: [
+      {
+        input: 10,
+        label: 'Macro1',
+        outputs: [
+          { cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'exponential' },
+        ],
+      },
+    ],
+  };
+
+  it('writes valid YAML that can be parsed back', async () => {
+    const tmp = `/tmp/midi-mapper-writer-test-${Date.now()}.yaml`;
+    const writer = new YamlConfigWriterAdapter();
+
+    await writer.save(tmp, sampleConfig);
+
+    const content = await Bun.file(tmp).text();
+    const parsed = parseYaml(content) as AppConfig;
+    expect(parsed.deviceName).toBe('Writer Test');
+    expect(parsed.rules).toHaveLength(1);
+    expect(parsed.rules[0]!.cc).toBe(1);
+    expect(parsed.rules[0]!.curve).toBe('linear');
+    expect(parsed.macros).toHaveLength(1);
+    expect(parsed.macros![0]!.input).toBe(10);
+    expect(parsed.macros![0]!.outputs[0]!.cc).toBe(20);
+    await unlink(tmp);
+  });
+
+  it('creates file at specified path', async () => {
+    const tmp = `/tmp/midi-mapper-writer-path-test-${Date.now()}.yaml`;
+    const writer = new YamlConfigWriterAdapter();
+
+    await writer.save(tmp, sampleConfig);
+
+    const exists = await Bun.file(tmp).exists();
+    expect(exists).toBe(true);
+    await unlink(tmp);
   });
 });

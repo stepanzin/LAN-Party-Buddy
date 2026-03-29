@@ -32,6 +32,8 @@ describe('processMidiMessage', () => {
 
     // clampMidi(128) = 127, so mappedValue in log is the clamped result
     expect(result.log.mappedValue).toBe(127);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
     const mainMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(mainMsg).toEqual([status(0), 10, 127]);
   });
@@ -47,6 +49,8 @@ describe('processMidiMessage', () => {
     const mainMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(mainMsg).toEqual([status(1), 20, expected]);
     expect(result.log.mappedValue).toBe(expected);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('clamps mapped value to 0-127 range (above 127)', () => {
@@ -58,6 +62,8 @@ describe('processMidiMessage', () => {
     const mainMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(mainMsg).toEqual([status(0), 5, 127]);
     expect(result.log.mappedValue).toBe(127);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('clamps mapped value to 0 when below 0', () => {
@@ -69,6 +75,8 @@ describe('processMidiMessage', () => {
     const mainMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(mainMsg).toEqual([status(0), 5, 0]);
     expect(result.log.mappedValue).toBe(0);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   // --- CC 49 special case ---
@@ -81,6 +89,8 @@ describe('processMidiMessage', () => {
 
     expect(result.outputMessages[0]).toEqual([status(0), 99, 0]);
     expect(result.outputMessages[1]).toEqual([status(0), 100, 127]);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('prepends [status, 99, 127] and [status, 100, 0] for any other cc', () => {
@@ -91,6 +101,8 @@ describe('processMidiMessage', () => {
 
     expect(result.outputMessages[0]).toEqual([status(2), 99, 127]);
     expect(result.outputMessages[1]).toEqual([status(2), 100, 0]);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   // --- prevCode / state management ---
@@ -99,9 +111,11 @@ describe('processMidiMessage', () => {
     const msg: MidiCC = { channel: 0, cc: 77, value: 50 };
     const rules: CompiledRules = {}; // no rules
 
-    const { nextState } = processMidiMessage(msg, rules, {}, INITIAL_ENGINE_STATE);
+    const { result, nextState } = processMidiMessage(msg, rules, {}, INITIAL_ENGINE_STATE);
 
     expect(nextState.prevCode).toBe(77);
+    expect(result.log.matched).toBe(false);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('emits [status, prevCode, 0] when prevCode was set and new unmapped cc arrives', () => {
@@ -113,6 +127,8 @@ describe('processMidiMessage', () => {
 
     // After NRPN preamble (indices 0 and 1), prevCode reset should be at index 2
     expect(result.outputMessages[2]).toEqual([status(0), 55, 0]);
+    expect(result.log.matched).toBe(false);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('does NOT emit prevCode message when prevCode is null', () => {
@@ -124,6 +140,8 @@ describe('processMidiMessage', () => {
 
     // Should be: NRPN preamble (2 msgs) + main message = 3 total
     expect(result.outputMessages.length).toBe(3);
+    expect(result.log.matched).toBe(false);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('resets prevCode tracking on each new unmapped message', () => {
@@ -165,6 +183,8 @@ describe('processMidiMessage', () => {
     // main message last
     expect(result.outputMessages[3]).toEqual([status(0), 33, 100]);
     expect(result.outputMessages.length).toBe(4);
+    expect(result.log.matched).toBe(false);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('output order with mapped rule: NRPN preamble -> main mapped message (no prevCode reset)', () => {
@@ -180,6 +200,8 @@ describe('processMidiMessage', () => {
     // main message (no prevCode reset since rule matched)
     expect(result.outputMessages[2]).toEqual([status(0), 33, 50]);
     expect(result.outputMessages.length).toBe(3);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   // --- INITIAL_ENGINE_STATE ---
@@ -207,6 +229,8 @@ describe('processMidiMessage', () => {
     expect(result.log.cc).toBe(15);
     expect(result.log.originalValue).toBe(80);
     expect(result.log.mappedValue).toBe(90);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   it('log shows original value even when mapped', () => {
@@ -218,6 +242,8 @@ describe('processMidiMessage', () => {
     expect(result.log.originalValue).toBe(100);
     expect(result.log.mappedValue).toBe(42);
     expect(result.log.cc).toBe(7);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 
   // --- State is not mutated when rule matches ---
@@ -227,10 +253,12 @@ describe('processMidiMessage', () => {
     const rules: CompiledRules = { '10': rule((v) => v) };
     const state: EngineState = { prevCode: 5, smoothingBuffers: {}, toggleStates: {} };
 
-    const { nextState } = processMidiMessage(msg, rules, {}, state);
+    const { result, nextState } = processMidiMessage(msg, rules, {}, state);
 
     // prevCode should remain unchanged when a rule matched
     expect(nextState.prevCode).toBe(5);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 });
 
@@ -247,16 +275,22 @@ describe('smoothing', () => {
     state = r1.nextState;
     // Average of [60] = 60
     expect(r1.result.log.mappedValue).toBe(60);
+    expect(r1.result.log.matched).toBe(true);
+    expect(r1.result.log.macroOutputs).toEqual([]);
 
     const r2 = processMidiMessage({ channel: 0, cc: 10, value: 90 }, rules, {}, state);
     state = r2.nextState;
     // Average of [60, 90] = 75
     expect(r2.result.log.mappedValue).toBe(75);
+    expect(r2.result.log.matched).toBe(true);
+    expect(r2.result.log.macroOutputs).toEqual([]);
 
     const r3 = processMidiMessage({ channel: 0, cc: 10, value: 120 }, rules, {}, state);
     state = r3.nextState;
     // Average of [60, 90, 120] = 90
     expect(r3.result.log.mappedValue).toBe(90);
+    expect(r3.result.log.matched).toBe(true);
+    expect(r3.result.log.macroOutputs).toEqual([]);
   });
 
   it('smoothing buffer grows up to window size then drops oldest', () => {
@@ -268,18 +302,24 @@ describe('smoothing', () => {
     const r1 = processMidiMessage({ channel: 0, cc: 10, value: 100 }, rules, {}, state);
     state = r1.nextState;
     expect(state.smoothingBuffers['10']).toEqual([100]);
+    expect(r1.result.log.matched).toBe(true);
+    expect(r1.result.log.macroOutputs).toEqual([]);
 
     // Send value 50 => buffer [100, 50], average = 75
     const r2 = processMidiMessage({ channel: 0, cc: 10, value: 50 }, rules, {}, state);
     state = r2.nextState;
     expect(state.smoothingBuffers['10']).toEqual([100, 50]);
     expect(r2.result.log.mappedValue).toBe(75);
+    expect(r2.result.log.matched).toBe(true);
+    expect(r2.result.log.macroOutputs).toEqual([]);
 
     // Send value 0 => buffer [50, 0] (100 dropped), average = 25
     const r3 = processMidiMessage({ channel: 0, cc: 10, value: 0 }, rules, {}, state);
     state = r3.nextState;
     expect(state.smoothingBuffers['10']).toEqual([50, 0]);
     expect(r3.result.log.mappedValue).toBe(25);
+    expect(r3.result.log.matched).toBe(true);
+    expect(r3.result.log.macroOutputs).toEqual([]);
   });
 
   it('no smoothing when smoothing=0', () => {
@@ -293,6 +333,8 @@ describe('smoothing', () => {
     );
 
     expect(result.log.mappedValue).toBe(64);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
     // No smoothing buffer should be created
     expect(nextState.smoothingBuffers['10']).toBeUndefined();
   });
@@ -363,6 +405,8 @@ describe('toggle mode', () => {
 
     // Toggle flips from false to true -> transform(127) = 127
     expect(result.log.mappedValue).toBe(127);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
     expect(nextState.toggleStates['10']).toBe(true);
     const mainMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(mainMsg).toEqual([status(0), 10, 127]);
@@ -385,6 +429,8 @@ describe('toggle mode', () => {
 
     // Toggle flips from true to false -> transform(0) = 0
     expect(result.log.mappedValue).toBe(0);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
     expect(nextState.toggleStates['10']).toBe(false);
     const mainMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(mainMsg).toEqual([status(0), 10, 0]);
@@ -407,6 +453,8 @@ describe('toggle mode', () => {
 
     // Release: don't flip, toggle stays true -> transform(127) = 127
     expect(result.log.mappedValue).toBe(127);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
     expect(nextState.toggleStates['10']).toBe(true);
   });
 
@@ -440,6 +488,8 @@ describe('toggle mode', () => {
     );
     expect(r3.nextState.toggleStates['10']).toBe(false);
     expect(r3.result.log.mappedValue).toBe(0);
+    expect(r3.result.log.matched).toBe(true);
+    expect(r3.result.log.macroOutputs).toEqual([]);
   });
 
   it('toggle state is per-CC', () => {
@@ -481,6 +531,8 @@ describe('toggle mode', () => {
       INITIAL_ENGINE_STATE,
     );
     expect(r1.result.log.mappedValue).toBe(64);
+    expect(r1.result.log.matched).toBe(true);
+    expect(r1.result.log.macroOutputs).toEqual([]);
 
     // Press again: toggle OFF -> transform(0) = 0
     const r2 = processMidiMessage(
@@ -490,6 +542,8 @@ describe('toggle mode', () => {
       r1.nextState,
     );
     expect(r2.result.log.mappedValue).toBe(0);
+    expect(r2.result.log.matched).toBe(true);
+    expect(r2.result.log.macroOutputs).toEqual([]);
   });
 });
 
@@ -513,6 +567,8 @@ describe('macros', () => {
     expect(result.outputMessages.length).toBe(4);
     // Macro output is after main message
     expect(result.outputMessages[3]).toEqual([status(0), 20, 64]);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([{ cc: 20, value: 64 }]);
   });
 
   it('macro transform is applied to input value', () => {
@@ -531,6 +587,8 @@ describe('macros', () => {
     // macro: transform(50) = 100
     const macroMsg = result.outputMessages[result.outputMessages.length - 1];
     expect(macroMsg).toEqual([status(0), 30, 100]);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([{ cc: 30, value: 100 }]);
   });
 
   it('macro output values are clamped to 0-127', () => {
@@ -553,6 +611,11 @@ describe('macros', () => {
     const msgs = result.outputMessages;
     expect(msgs[msgs.length - 2]).toEqual([status(0), 30, 127]); // clamped above
     expect(msgs[msgs.length - 1]).toEqual([status(0), 40, 0]);   // clamped below
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([
+      { cc: 30, value: 127 },
+      { cc: 40, value: 0 },
+    ]);
   });
 
   it('multiple macro outputs produce multiple messages', () => {
@@ -577,6 +640,12 @@ describe('macros', () => {
     expect(result.outputMessages[3]).toEqual([status(0), 20, 50]);
     expect(result.outputMessages[4]).toEqual([status(0), 30, 60]);
     expect(result.outputMessages[5]).toEqual([status(0), 40, 40]);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([
+      { cc: 20, value: 50 },
+      { cc: 30, value: 60 },
+      { cc: 40, value: 40 },
+    ]);
   });
 
   it('macros work alongside regular rules (both produce output)', () => {
@@ -596,6 +665,8 @@ describe('macros', () => {
     expect(result.outputMessages[2]).toEqual([status(0), 10, 100]);
     // Macro: 50 + 5 = 55 (uses original msg.value, not mapped)
     expect(result.outputMessages[3]).toEqual([status(0), 20, 55]);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([{ cc: 20, value: 55 }]);
   });
 
   it('macros work without a matching rule', () => {
@@ -617,6 +688,8 @@ describe('macros', () => {
     expect(result.outputMessages[2]).toEqual([status(0), 10, 64]);
     // Macro output
     expect(result.outputMessages[3]).toEqual([status(0), 20, 64]);
+    expect(result.log.matched).toBe(false);
+    expect(result.log.macroOutputs).toEqual([{ cc: 20, value: 64 }]);
   });
 
   it('no macro messages when cc has no macro defined', () => {
@@ -632,5 +705,7 @@ describe('macros', () => {
 
     // NRPN preamble (2) + main (1) = 3 (no macro messages)
     expect(result.outputMessages.length).toBe(3);
+    expect(result.log.matched).toBe(true);
+    expect(result.log.macroOutputs).toEqual([]);
   });
 });

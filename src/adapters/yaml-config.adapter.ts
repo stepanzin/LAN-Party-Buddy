@@ -1,5 +1,6 @@
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, stringify as yamlStringify } from 'yaml';
 import type { ConfigReaderPort } from '../ports/config-reader.port';
+import type { ConfigWriterPort } from '../ports/config-writer.port';
 import type { AppConfig, Curve, MacroConfig, MacroOutput, RuleConfig } from '../domain/config';
 
 const VALID_CURVES: readonly Curve[] = ['linear', 'logarithmic', 'exponential', 's-curve'];
@@ -207,5 +208,11 @@ export class YamlConfigAdapter implements ConfigReaderPort {
   async load(source: string): Promise<AppConfig> {
     const content = await Bun.file(source).text();
     return parseConfig(content);
+  }
+}
+
+export class YamlConfigWriterAdapter implements ConfigWriterPort {
+  async save(path: string, config: AppConfig): Promise<void> {
+    await Bun.write(path, yamlStringify(config));
   }
 }

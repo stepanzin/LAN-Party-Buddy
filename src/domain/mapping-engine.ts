@@ -19,6 +19,8 @@ export type MappingResult = {
     readonly cc: number;
     readonly originalValue: number;
     readonly mappedValue: number;
+    readonly matched: boolean;
+    readonly macroOutputs: ReadonlyArray<{ readonly cc: number; readonly value: number }>;
   };
 };
 
@@ -107,9 +109,12 @@ export function processMidiMessage(
 
   // Macro logic: additional outputs
   const macroList = macros[ccKey];
+  const macroOutputs: Array<{ readonly cc: number; readonly value: number }> = [];
   if (macroList) {
     for (const macro of macroList) {
-      outputMessages.push([statusByte, macro.outputCc, clampMidi(macro.transform(value))]);
+      const macroValue = clampMidi(macro.transform(value));
+      outputMessages.push([statusByte, macro.outputCc, macroValue]);
+      macroOutputs.push({ cc: macro.outputCc, value: macroValue });
     }
   }
 
@@ -120,6 +125,8 @@ export function processMidiMessage(
         cc,
         originalValue: value,
         mappedValue,
+        matched: rule !== undefined,
+        macroOutputs,
       },
     },
     nextState,

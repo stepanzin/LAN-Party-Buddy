@@ -7,6 +7,7 @@ import type { DeviceDiscoveryPort, MidiDevice } from '../../src/ports/device-dis
 import type { UserInterfacePort } from '../../src/ports/user-interface.port.ts';
 import type { ConfigReaderPort } from '../../src/ports/config-reader.port.ts';
 import type { StateStorePort, AppState } from '../../src/ports/state-store.port.ts';
+import type { MonitorPort } from '../../src/ports/monitor.port.ts';
 import type { AppConfig } from '../../src/domain/config.ts';
 
 // --- Helpers ---
@@ -90,6 +91,18 @@ function createMockStateStore(initialState: AppState = {}): StateStorePort {
   };
 }
 
+function createMockMonitor(): MonitorPort {
+  return {
+    start: mock(() => {}),
+    stop: mock(() => {}),
+    onMidiActivity: mock((_cc: number, _value: number, _mappedValue: number, _ruleLabel?: string) => {}),
+    onMacroActivity: mock((_inputCc: number, _outputs: Array<{ cc: number; value: number }>) => {}),
+    onUnmappedCC: mock((_cc: number, _value: number) => {}),
+    setDevice: mock((_name: string) => {}),
+    setConnectionStatus: mock((_connected: boolean) => {}),
+  };
+}
+
 function createDeps(overrides: Partial<{
   midiInput: ReturnType<typeof createMockMidiInput>;
   midiOutput: MidiOutputPort;
@@ -97,6 +110,7 @@ function createDeps(overrides: Partial<{
   ui: UserInterfacePort;
   configReader: ConfigReaderPort;
   stateStore: StateStorePort;
+  monitor: MonitorPort;
 }> = {}) {
   const mockInput = overrides.midiInput ?? createMockMidiInput();
   const midiOutput = overrides.midiOutput ?? createMockMidiOutput();
@@ -112,6 +126,7 @@ function createDeps(overrides: Partial<{
     ui,
     configReader,
     stateStore,
+    ...(overrides.monitor ? { monitor: overrides.monitor } : {}),
   };
 
   return { deps, mockInput, midiOutput, deviceDiscovery, ui, configReader, stateStore };
@@ -517,6 +532,427 @@ describe('MidiMapperApp', () => {
       expect(ui.showError).toHaveBeenCalledWith(
         'No MIDI input devices found. Connect a device and try again.',
       );
+    });
+  });
+
+  // --- MonitorPort integration ---
+
+  describe('MonitorPort integration', () => {
+    it('calls monitor.onMidiActivity when rule matches', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // CC 10 has a rule in TEST_CONFIG with label 'Volume'
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      expect(monitor.onMidiActivity).toHaveBeenCalledWith(10, 64, expect.any(Number), 'Volume');
+    });
+
+    it('calls monitor.onUnmappedCC when no rule matches', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // CC 99 has no rule in TEST_CONFIG
+      midiInput.simulateMessage({ channel: 0, cc: 99, value: 50 });
+
+      expect(monitor.onUnmappedCC).toHaveBeenCalledWith(99, 50);
+      expect(monitor.onMidiActivity).not.toHaveBeenCalled();
+    });
+
+    it('calls monitor.onMacroActivity when macros fire', async () => {
+      const macroConfig: AppConfig = {
+        deviceName: 'VirtualOut',
+        rules: [
+          { cc: 10, label: 'Volume', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
+        ],
+        macros: [
+          {
+            input: 10,
+            label: 'VolumeMacro',
+            outputs: [
+              { cc: 20, label: 'Aux1', outputMin: 0, outputMax: 127, curve: 'linear' as const },
+            ],
+          },
+        ],
+      };
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const configReader = createMockConfigReader(macroConfig);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor, configReader });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      expect(monitor.onMacroActivity).toHaveBeenCalledWith(10, expect.arrayContaining([
+        expect.objectContaining({ cc: 20 }),
+      ]));
+    });
+
+    it('calls monitor.setDevice after device selection', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(monitor.setDevice).toHaveBeenCalledWith('Controller A');
+    });
+
+    it('calls monitor.setConnectionStatus(false) on disconnect', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false], // immediate disconnect
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(monitor.setConnectionStatus).toHaveBeenCalledWith(false);
+    });
+
+    it('works without monitor port (backward compat)', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      // No monitor provided
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // Should still process messages normally
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      expect(midiOutput.send).toHaveBeenCalled();
+      expect(ui.logMapping).toHaveBeenCalled();
+    });
+
+    it('does not call monitor.onMacroActivity when no macros fire', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // CC 10 has a rule but no macros in TEST_CONFIG
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      expect(monitor.onMacroActivity).not.toHaveBeenCalled();
+    });
+
+    it('returns undefined label for unmapped CC', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // CC 99 has no rule - onUnmappedCC should be called (no label needed)
+      midiInput.simulateMessage({ channel: 0, cc: 99, value: 50 });
+      expect(monitor.onUnmappedCC).toHaveBeenCalledWith(99, 50);
+    });
+  });
+
+  // --- MIDI Learn ---
+
+  describe('MIDI Learn', () => {
+    it('intercepts message and feeds CC to config editor service', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput });
+
+      const mockService = {
+        isMidiLearnActive: true,
+        feedMidiLearn: mock((_cc: number) => true),
+        cancelMidiLearn: mock(() => {}),
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      midiInput.simulateMessage({ channel: 0, cc: 42, value: 100 });
+
+      expect(mockService.feedMidiLearn).toHaveBeenCalledWith(42);
+    });
+
+    it('skips normal processing during MIDI learn', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const mockService = {
+        isMidiLearnActive: true,
+        feedMidiLearn: mock((_cc: number) => true),
+        cancelMidiLearn: mock(() => {}),
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      // Normal processing should be skipped
+      expect(midiOutput.send).not.toHaveBeenCalled();
+      expect(ui.logMapping).not.toHaveBeenCalled();
+    });
+
+    it('resumes normal processing after learn completes', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const mockService = {
+        isMidiLearnActive: true,
+        feedMidiLearn: mock((_cc: number) => true),
+        cancelMidiLearn: mock(() => {}),
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      // First message: intercepted by MIDI learn
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      expect(midiOutput.send).not.toHaveBeenCalled();
+
+      // Deactivate MIDI learn
+      mockService.isMidiLearnActive = false;
+
+      // Second message: normal processing resumes
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      expect(midiOutput.send).toHaveBeenCalled();
+      expect(ui.logMapping).toHaveBeenCalled();
+    });
+  });
+
+  // --- Hot reload ---
+
+  describe('Hot reload', () => {
+    it('uses updated rules after onConfigChanged callback fires', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const mockService: any = {
+        isMidiLearnActive: false,
+        feedMidiLearn: mock((_cc: number) => true),
+        onConfigChanged: null,
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      // The app should have registered onConfigChanged
+      expect(mockService.onConfigChanged).toBeFunction();
+
+      // Original config: CC 10 has a rule with outputMin=0, outputMax=127 (linear)
+      // Send message with old rules
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      const firstLogCall = (ui.logMapping as ReturnType<typeof mock>).mock.calls[0];
+      const firstMappedValue = firstLogCall[2]; // mappedValue from log
+
+      // Now fire hot-reload with a new config where CC 10 has outputMin=0, outputMax=50
+      const newConfig: AppConfig = {
+        deviceName: 'VirtualOut',
+        rules: [
+          { cc: 10, label: 'Volume Low', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 50, curve: 'linear' as const },
+        ],
+      };
+      mockService.onConfigChanged(newConfig);
+
+      // Send same message again with new rules
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      const secondLogCall = (ui.logMapping as ReturnType<typeof mock>).mock.calls[1];
+      const secondMappedValue = secondLogCall[2];
+
+      // Mapped value should differ (64 maps to ~25 with max 50 vs 64 with max 127)
+      expect(secondMappedValue).not.toBe(firstMappedValue);
+      expect(secondMappedValue).toBeLessThan(firstMappedValue);
+    });
+
+    it('does not register onConfigChanged when no config editor service', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, midiInput });
+
+      // No configEditorService set
+      const app = new MidiMapperApp(deps, 10);
+      // Should not throw
+      await app.run('config.yaml');
+
+      // Just verify normal operation works
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+    });
+
+    it('updates macros on hot-reload as well', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const monitor = createMockMonitor();
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, monitor });
+
+      const mockService: any = {
+        isMidiLearnActive: false,
+        feedMidiLearn: mock((_cc: number) => true),
+        onConfigChanged: null,
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      // Original config has no macros, send CC 10
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      expect(monitor.onMacroActivity).not.toHaveBeenCalled();
+
+      // Hot-reload with macros
+      const newConfig: AppConfig = {
+        deviceName: 'VirtualOut',
+        rules: [
+          { cc: 10, label: 'Volume', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
+        ],
+        macros: [
+          {
+            input: 10,
+            label: 'VolumeMacro',
+            outputs: [
+              { cc: 30, label: 'Aux', outputMin: 0, outputMax: 127, curve: 'linear' as const },
+            ],
+          },
+        ],
+      };
+      mockService.onConfigChanged(newConfig);
+
+      // Now CC 10 should trigger macro outputs
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+      expect(monitor.onMacroActivity).toHaveBeenCalledWith(10, expect.arrayContaining([
+        expect.objectContaining({ cc: 30 }),
+      ]));
+    });
+  });
+
+  // --- MIDI Learn + Disconnect ---
+
+  describe('MIDI Learn + Disconnect', () => {
+    it('cancels MIDI learn on device disconnect', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []], // first call returns devices, second returns empty to exit loop
+        [false],       // immediate disconnect
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const cancelMidiLearn = mock(() => {});
+      const mockService = {
+        isMidiLearnActive: true,
+        feedMidiLearn: mock((_cc: number) => true),
+        cancelMidiLearn,
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      // After disconnect, cancelMidiLearn should have been called
+      expect(cancelMidiLearn).toHaveBeenCalled();
+    });
+
+    it('does not call cancelMidiLearn when learn is not active on disconnect', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []], // first call returns devices, second returns empty to exit loop
+        [false],       // immediate disconnect
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const cancelMidiLearn = mock(() => {});
+      const mockService = {
+        isMidiLearnActive: false,
+        feedMidiLearn: mock((_cc: number) => false),
+        cancelMidiLearn,
+      };
+
+      const app = new MidiMapperApp(deps, 10);
+      app.setConfigEditorService(mockService);
+      await app.run('config.yaml');
+
+      // cancelMidiLearn should NOT have been called since learn was not active
+      expect(cancelMidiLearn).not.toHaveBeenCalled();
     });
   });
 });
