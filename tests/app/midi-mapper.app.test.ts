@@ -1,0 +1,522 @@
+import { describe, it, expect, mock, beforeEach } from 'bun:test';
+
+import { MidiMapperApp, type MidiMapperDeps } from '../../src/app/midi-mapper.app.ts';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../src/ports/midi-input.port.ts';
+import type { MidiOutputPort } from '../../src/ports/midi-output.port.ts';
+import type { DeviceDiscoveryPort, MidiDevice } from '../../src/ports/device-discovery.port.ts';
+import type { UserInterfacePort } from '../../src/ports/user-interface.port.ts';
+import type { ConfigReaderPort } from '../../src/ports/config-reader.port.ts';
+import type { StateStorePort, AppState } from '../../src/ports/state-store.port.ts';
+import type { AppConfig } from '../../src/domain/config.ts';
+
+// --- Helpers ---
+
+const TEST_CONFIG: AppConfig = {
+  deviceName: 'VirtualOut',
+  rules: [
+    { cc: 10, label: 'Volume', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
+  ],
+};
+
+const DEVICES: MidiDevice[] = [
+  { index: 0, name: 'Controller A' },
+  { index: 1, name: 'Controller B' },
+];
+
+function createMockMidiInput() {
+  let messageHandler: MidiMessageHandler | null = null;
+  let errorHandler: MidiErrorHandler | null = null;
+  const input: MidiInputPort = {
+    open: mock((_idx: number) => {}),
+    close: mock(() => {}),
+    onMessage: mock((handler: MidiMessageHandler) => { messageHandler = handler; }),
+    onError: mock((handler: MidiErrorHandler) => { errorHandler = handler; }),
+  };
+  return {
+    input,
+    simulateMessage: (msg: { channel: number; cc: number; value: number }) => messageHandler?.(msg),
+    simulateError: (err: Error) => errorHandler?.(err),
+  };
+}
+
+function createMockMidiOutput(): MidiOutputPort {
+  return {
+    openVirtual: mock((_name: string) => {}),
+    send: mock((_msg: readonly [number, number, number]) => {}),
+    close: mock(() => {}),
+  };
+}
+
+function createMockDeviceDiscovery(
+  devicesSequence: MidiDevice[][] = [DEVICES],
+  connectionChecks: boolean[] = [true],
+): DeviceDiscoveryPort {
+  let listCallCount = 0;
+  let connCheckCount = 0;
+  return {
+    listDevices: mock(() => {
+      const devices = devicesSequence[Math.min(listCallCount, devicesSequence.length - 1)]!;
+      listCallCount++;
+      return devices;
+    }),
+    isDeviceConnected: mock((_name: string) => {
+      const connected = connectionChecks[Math.min(connCheckCount, connectionChecks.length - 1)]!;
+      connCheckCount++;
+      return connected;
+    }),
+  };
+}
+
+function createMockUI(selectedDeviceIndex = 0): UserInterfacePort {
+  return {
+    selectDevice: mock((_devices: MidiDevice[]) => Promise.resolve(selectedDeviceIndex)),
+    showInfo: mock((_msg: string) => {}),
+    showWarning: mock((_msg: string) => {}),
+    showError: mock((_msg: string) => {}),
+    logMapping: mock((_cc: number, _orig: number, _mapped: number) => {}),
+  };
+}
+
+function createMockConfigReader(config: AppConfig = TEST_CONFIG): ConfigReaderPort {
+  return {
+    load: mock((_source: string) => Promise.resolve(config)),
+  };
+}
+
+function createMockStateStore(initialState: AppState = {}): StateStorePort {
+  return {
+    load: mock(() => Promise.resolve(initialState)),
+    save: mock((_state: AppState) => Promise.resolve()),
+  };
+}
+
+function createDeps(overrides: Partial<{
+  midiInput: ReturnType<typeof createMockMidiInput>;
+  midiOutput: MidiOutputPort;
+  deviceDiscovery: DeviceDiscoveryPort;
+  ui: UserInterfacePort;
+  configReader: ConfigReaderPort;
+  stateStore: StateStorePort;
+}> = {}) {
+  const mockInput = overrides.midiInput ?? createMockMidiInput();
+  const midiOutput = overrides.midiOutput ?? createMockMidiOutput();
+  const deviceDiscovery = overrides.deviceDiscovery ?? createMockDeviceDiscovery();
+  const ui = overrides.ui ?? createMockUI();
+  const configReader = overrides.configReader ?? createMockConfigReader();
+  const stateStore = overrides.stateStore ?? createMockStateStore();
+
+  const deps: MidiMapperDeps = {
+    midiInput: mockInput.input,
+    midiOutput,
+    deviceDiscovery,
+    ui,
+    configReader,
+    stateStore,
+  };
+
+  return { deps, mockInput, midiOutput, deviceDiscovery, ui, configReader, stateStore };
+}
+
+// --- Tests ---
+
+describe('MidiMapperApp', () => {
+
+  // --- Config loading ---
+
+  describe('Config loading', () => {
+    it('loads config from configReader on run()', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery([[]]);
+      const configReader = createMockConfigReader();
+      const { deps } = createDeps({ configReader, deviceDiscovery });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('my-config.yaml');
+
+      expect(configReader.load).toHaveBeenCalledWith('my-config.yaml');
+    });
+
+    it('calls buildRules with loaded config', async () => {
+      // We verify indirectly: if config loads and rules are built, the message handler
+      // uses them. We test this by sending a message and checking the output uses the rule.
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []], // first call returns devices, second returns empty to exit loop
+        [false],       // immediate disconnect
+      );
+      const stateStore = createMockStateStore();
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+
+      const { deps } = createDeps({ deviceDiscovery, stateStore, midiInput, midiOutput, ui });
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // After wiring, simulate a message. CC 10 has a rule in TEST_CONFIG.
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      // The mapping should have been applied (buildRules was called)
+      expect(ui.logMapping).toHaveBeenCalled();
+    });
+  });
+
+  // --- No devices ---
+
+  describe('No devices', () => {
+    it('shows error and returns when no devices found', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery([[]]);
+      const ui = createMockUI();
+      const { deps } = createDeps({ deviceDiscovery, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.showError).toHaveBeenCalledWith(
+        'No MIDI input devices found. Connect a device and try again.',
+      );
+    });
+  });
+
+  // --- Auto-connect ---
+
+  describe('Auto-connect', () => {
+    it('auto-connects when lastDevice matches a connected device', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({ lastDevice: 'Controller A' });
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(midiInput.input.open).toHaveBeenCalledWith(0);
+      // selectDevice should NOT have been called
+      expect(ui.selectDevice).not.toHaveBeenCalled();
+    });
+
+    it('shows info about auto-connecting', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({ lastDevice: 'Controller A' });
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.showInfo).toHaveBeenCalledWith('Auto-connecting to last device: Controller A');
+    });
+
+    it('falls back to selectDevice when lastDevice not found', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({ lastDevice: 'NonExistent Device' });
+      const ui = createMockUI(1);
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.selectDevice).toHaveBeenCalledWith(DEVICES);
+    });
+
+    it('shows info that last device not found', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({ lastDevice: 'NonExistent Device' });
+      const ui = createMockUI(1);
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.showInfo).toHaveBeenCalledWith('Last device "NonExistent Device" not found.');
+    });
+
+    it('calls selectDevice when no lastDevice in state', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({});
+      const ui = createMockUI(0);
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.selectDevice).toHaveBeenCalledWith(DEVICES);
+    });
+  });
+
+  // --- Connection ---
+
+  describe('Connection', () => {
+    it('opens input port with correct device index', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({});
+      const ui = createMockUI(1); // select device at index 1
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(midiInput.input.open).toHaveBeenCalledWith(1);
+    });
+
+    it('opens virtual output with config device name', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiOutput = createMockMidiOutput();
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, midiOutput, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(midiOutput.openVirtual).toHaveBeenCalledWith('VirtualOut');
+    });
+
+    it('saves selected device name to state store', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const stateStore = createMockStateStore({});
+      const ui = createMockUI(1); // select Controller B (index 1)
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(stateStore.save).toHaveBeenCalledWith({ lastDevice: 'Controller B' });
+    });
+
+    it('shows proxy info message', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const ui = createMockUI(0);
+      const midiInput = createMockMidiInput();
+      const { deps } = createDeps({ deviceDiscovery, ui, midiInput });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.showInfo).toHaveBeenCalledWith(
+        'Proxying MIDI signals -> VirtualOut\nDevice: Controller A',
+      );
+    });
+  });
+
+  // --- Message handling ---
+
+  describe('Message handling', () => {
+    it('wires message handler that calls processMidiMessage', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // onMessage should have been called (handler wired)
+      expect(midiInput.input.onMessage).toHaveBeenCalled();
+
+      // Simulate a MIDI message
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      // processMidiMessage should produce output messages that get sent
+      expect(midiOutput.send).toHaveBeenCalled();
+    });
+
+    it('sends all output messages from processMidiMessage result', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // CC 10 has a rule, so processMidiMessage returns NRPN + mapped message
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      // NRPN preamble (2 msgs) + main output (1 msg) = 3 messages
+      expect(midiOutput.send).toHaveBeenCalledTimes(3);
+    });
+
+    it('logs mapping via ui.logMapping', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
+
+      expect(ui.logMapping).toHaveBeenCalledWith(10, 64, expect.any(Number));
+    });
+
+    it('updates engine state between messages', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // CC 20 has no rule -> prevCode becomes 20
+      midiInput.simulateMessage({ channel: 0, cc: 20, value: 100 });
+      // CC 30 has no rule -> should emit [status, 20, 0] to clear prevCode
+      midiInput.simulateMessage({ channel: 0, cc: 30, value: 100 });
+
+      // The second message should have emitted a "clear prev" message [status, 20, 0]
+      const sendCalls = (midiOutput.send as ReturnType<typeof mock>).mock.calls;
+      const clearMsg = sendCalls.find(
+        (call: any) => call[0][1] === 20 && call[0][2] === 0,
+      );
+      expect(clearMsg).toBeDefined();
+    });
+  });
+
+  // --- Error handling ---
+
+  describe('Error handling', () => {
+    it('wires error handler that shows error via ui', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(midiInput.input.onError).toHaveBeenCalled();
+
+      midiInput.simulateError(new Error('Device lost'));
+      expect(ui.showError).toHaveBeenCalledWith('MIDI input error: Device lost');
+    });
+  });
+
+  // --- Disconnect + reconnect ---
+
+  describe('Disconnect + reconnect', () => {
+    it('polls for device disconnect', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [true, true, false], // connected, connected, disconnected
+      );
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // isDeviceConnected should have been called multiple times
+      expect(deviceDiscovery.isDeviceConnected).toHaveBeenCalled();
+      const callCount = (deviceDiscovery.isDeviceConnected as ReturnType<typeof mock>).mock.calls.length;
+      expect(callCount).toBeGreaterThanOrEqual(3);
+    });
+
+    it('shows warning on disconnect', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false], // immediate disconnect
+      );
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(ui.showWarning).toHaveBeenCalledWith('Device "Controller A" disconnected.');
+    });
+
+    it('closes both ports on disconnect', async () => {
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []],
+        [false],
+      );
+      const midiInput = createMockMidiInput();
+      const midiOutput = createMockMidiOutput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      expect(midiInput.input.close).toHaveBeenCalled();
+      expect(midiOutput.close).toHaveBeenCalled();
+    });
+
+    it('loops back to device selection after disconnect', async () => {
+      // First iteration: devices present, disconnect detected
+      // Second iteration: no devices, exits via "no devices" path
+      const deviceDiscovery = createMockDeviceDiscovery(
+        [DEVICES, []], // first: devices, second: empty
+        [false],       // immediate disconnect on first iteration
+      );
+      const midiInput = createMockMidiInput();
+      const ui = createMockUI(0);
+      const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
+
+      const app = new MidiMapperApp(deps, 10);
+      await app.run('config.yaml');
+
+      // listDevices called twice: first iteration + second iteration
+      const listCalls = (deviceDiscovery.listDevices as ReturnType<typeof mock>).mock.calls.length;
+      expect(listCalls).toBe(2);
+
+      // Second iteration should show "no devices" error
+      expect(ui.showError).toHaveBeenCalledWith(
+        'No MIDI input devices found. Connect a device and try again.',
+      );
+    });
+  });
+});

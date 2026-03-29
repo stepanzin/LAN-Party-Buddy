@@ -8,7 +8,8 @@
     "compile": "bun build ./index.ts --compile --outfile build/midi-mapper"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "fast-check": "^4.6.0"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -16,6 +17,7 @@
   "dependencies": {
     "@inquirer/prompts": "^8.0.1",
     "@julusian/midi": "^3.6.1",
-    "fp-ts": "^2.16.11"
+    "fp-ts": "^2.16.11",
+    "yaml": "^2.8.3"
   }
 }

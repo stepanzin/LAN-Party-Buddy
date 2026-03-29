@@ -1,0 +1,44 @@
+deviceName: "MIDI Mapper Output"
+
+rules:
+  - cc: 4
+    label: "Left Expression Pedal"
+    inputMin: 40
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+    smoothing: 3
+
+  - cc: 5
+    label: "Right Expression Pedal"
+    inputMin: 40
+    inputMax: 120
+    outputMin: 0
+    outputMax: 64
+    curve: linear
+
+  - cc: 64
+    label: "Sustain Toggle"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+    mode: toggle
+
+# macros:
+#   - input: 1
+#     label: "Performance Macro"
+#     outputs:
+#       - cc: 74
+#         label: "Filter Cutoff"
+#         outputMin: 0
+#         outputMax: 127
+#         curve: exponential
+#       - cc: 71
+#         label: "Resonance"
+#         outputMin: 100
+#         outputMax: 20
+#         curve: linear
+#         invert: true
