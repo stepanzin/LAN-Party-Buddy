@@ -1,0 +1,21 @@
+{
+  "name": "midi-mapper-bun",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts",
+    "compile": "bun build ./index.ts --compile --outfile build/midi-mapper"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.0.1",
+    "@julusian/midi": "^3.6.1",
+    "fp-ts": "^2.16.11"
+  }
+}
