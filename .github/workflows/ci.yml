@@ -24,6 +24,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun test --timeout 30000
+        env:
+          CI: true
 
   build:
     name: Build (${{ matrix.os }})

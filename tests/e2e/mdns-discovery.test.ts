@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
 import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 
-describe('mDNS Advertiser + Browser Integration', () => {
+// Skip real mDNS tests in CI — no multicast networking available
+const isCI = process.env.CI === 'true';
+
+describe.skipIf(isCI)('mDNS Advertiser + Browser Integration', () => {
   const advertisers: MdnsAdvertiserAdapter[] = [];
   const browsers: MdnsBrowserDiscoveryAdapter[] = [];
 
