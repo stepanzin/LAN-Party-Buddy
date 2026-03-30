@@ -1,12 +1,8 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 
-import {
-  processMidiMessage,
-  INITIAL_ENGINE_STATE,
-  type EngineState,
-} from '@domain/mapping-engine';
+import { type EngineState, INITIAL_ENGINE_STATE, processMidiMessage } from '@domain/mapping-engine';
+import type { CompiledMacros, CompiledRule, CompiledRules } from '@domain/mapping-rule';
 import type { MidiCC } from '@domain/midi-message';
-import type { CompiledRules, CompiledMacros, CompiledRule } from '@domain/mapping-rule';
 
 // Helper to build a CompiledRule with defaults
 const rule = (
@@ -157,12 +153,7 @@ describe('processMidiMessage', () => {
     expect(state1.prevCode).toBe(10);
 
     // Second unmapped message - prevCode should now be 20
-    const { nextState: state2 } = processMidiMessage(
-      { channel: 0, cc: 20, value: 60 },
-      rules,
-      {},
-      state1,
-    );
+    const { nextState: state2 } = processMidiMessage({ channel: 0, cc: 20, value: 60 }, rules, {}, state1);
     expect(state2.prevCode).toBe(20);
   });
 
@@ -420,12 +411,7 @@ describe('toggle mode', () => {
       toggleStates: { '10': true },
     };
 
-    const { result, nextState } = processMidiMessage(
-      { channel: 0, cc: 10, value: 127 },
-      rules,
-      {},
-      state,
-    );
+    const { result, nextState } = processMidiMessage({ channel: 0, cc: 10, value: 127 }, rules, {}, state);
 
     // Toggle flips from true to false -> transform(0) = 0
     expect(result.log.mappedValue).toBe(0);
@@ -444,12 +430,7 @@ describe('toggle mode', () => {
       toggleStates: { '10': true },
     };
 
-    const { result, nextState } = processMidiMessage(
-      { channel: 0, cc: 10, value: 0 },
-      rules,
-      {},
-      state,
-    );
+    const { result, nextState } = processMidiMessage({ channel: 0, cc: 10, value: 0 }, rules, {}, state);
 
     // Release: don't flip, toggle stays true -> transform(127) = 127
     expect(result.log.mappedValue).toBe(127);
@@ -462,30 +443,15 @@ describe('toggle mode', () => {
     const rules: CompiledRules = { '10': rule((v) => v, { mode: 'toggle' }) };
 
     // First press: toggle ON
-    const r1 = processMidiMessage(
-      { channel: 0, cc: 10, value: 100 },
-      rules,
-      {},
-      INITIAL_ENGINE_STATE,
-    );
+    const r1 = processMidiMessage({ channel: 0, cc: 10, value: 100 }, rules, {}, INITIAL_ENGINE_STATE);
     expect(r1.nextState.toggleStates['10']).toBe(true);
 
     // Release: stays ON
-    const r2 = processMidiMessage(
-      { channel: 0, cc: 10, value: 0 },
-      rules,
-      {},
-      r1.nextState,
-    );
+    const r2 = processMidiMessage({ channel: 0, cc: 10, value: 0 }, rules, {}, r1.nextState);
     expect(r2.nextState.toggleStates['10']).toBe(true);
 
     // Second press: toggle OFF
-    const r3 = processMidiMessage(
-      { channel: 0, cc: 10, value: 100 },
-      rules,
-      {},
-      r2.nextState,
-    );
+    const r3 = processMidiMessage({ channel: 0, cc: 10, value: 100 }, rules, {}, r2.nextState);
     expect(r3.nextState.toggleStates['10']).toBe(false);
     expect(r3.result.log.mappedValue).toBe(0);
     expect(r3.result.log.matched).toBe(true);
@@ -524,23 +490,13 @@ describe('toggle mode', () => {
     const rules: CompiledRules = { '10': rule((v) => v / 2, { mode: 'toggle' }) };
 
     // Press: toggle ON -> transform(127) = 63.5 -> clamped to 64
-    const r1 = processMidiMessage(
-      { channel: 0, cc: 10, value: 127 },
-      rules,
-      {},
-      INITIAL_ENGINE_STATE,
-    );
+    const r1 = processMidiMessage({ channel: 0, cc: 10, value: 127 }, rules, {}, INITIAL_ENGINE_STATE);
     expect(r1.result.log.mappedValue).toBe(64);
     expect(r1.result.log.matched).toBe(true);
     expect(r1.result.log.macroOutputs).toEqual([]);
 
     // Press again: toggle OFF -> transform(0) = 0
-    const r2 = processMidiMessage(
-      { channel: 0, cc: 10, value: 127 },
-      rules,
-      {},
-      r1.nextState,
-    );
+    const r2 = processMidiMessage({ channel: 0, cc: 10, value: 127 }, rules, {}, r1.nextState);
     expect(r2.result.log.mappedValue).toBe(0);
     expect(r2.result.log.matched).toBe(true);
     expect(r2.result.log.macroOutputs).toEqual([]);
@@ -556,12 +512,7 @@ describe('macros', () => {
       '10': [{ outputCc: 20, transform: (v) => v }],
     };
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 64 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 64 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // NRPN preamble (2) + main (1) + macro (1) = 4 messages
     expect(result.outputMessages.length).toBe(4);
@@ -577,12 +528,7 @@ describe('macros', () => {
       '10': [{ outputCc: 30, transform: (v) => v * 2 }],
     };
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 50 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 50 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // macro: transform(50) = 100
     const macroMsg = result.outputMessages[result.outputMessages.length - 1];
@@ -595,22 +541,17 @@ describe('macros', () => {
     const rules: CompiledRules = { '10': rule((v) => v) };
     const macros: CompiledMacros = {
       '10': [
-        { outputCc: 30, transform: (v) => v * 10 },  // will exceed 127
-        { outputCc: 40, transform: (_v) => -50 },     // will go below 0
+        { outputCc: 30, transform: (v) => v * 10 }, // will exceed 127
+        { outputCc: 40, transform: (_v) => -50 }, // will go below 0
       ],
     };
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 100 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 100 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // Macro outputs clamped
     const msgs = result.outputMessages;
     expect(msgs[msgs.length - 2]).toEqual([status(0), 30, 127]); // clamped above
-    expect(msgs[msgs.length - 1]).toEqual([status(0), 40, 0]);   // clamped below
+    expect(msgs[msgs.length - 1]).toEqual([status(0), 40, 0]); // clamped below
     expect(result.log.matched).toBe(true);
     expect(result.log.macroOutputs).toEqual([
       { cc: 30, value: 127 },
@@ -628,12 +569,7 @@ describe('macros', () => {
       ],
     };
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 50 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 50 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // NRPN preamble (2) + main (1) + 3 macros = 6
     expect(result.outputMessages.length).toBe(6);
@@ -654,12 +590,7 @@ describe('macros', () => {
       '10': [{ outputCc: 20, transform: (v) => v + 5 }],
     };
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 50 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 50 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // Main rule: 50 * 2 = 100
     expect(result.outputMessages[2]).toEqual([status(0), 10, 100]);
@@ -675,12 +606,7 @@ describe('macros', () => {
       '10': [{ outputCc: 20, transform: (v) => v }],
     };
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 64 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 64 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // NRPN (2) + main unmapped (1) + macro (1) = 4
     expect(result.outputMessages.length).toBe(4);
@@ -696,12 +622,7 @@ describe('macros', () => {
     const rules: CompiledRules = { '10': rule((v) => v) };
     const macros: CompiledMacros = {}; // no macros
 
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 10, value: 64 },
-      rules,
-      macros,
-      INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 10, value: 64 }, rules, macros, INITIAL_ENGINE_STATE);
 
     // NRPN preamble (2) + main (1) = 3 (no macro messages)
     expect(result.outputMessages.length).toBe(3);

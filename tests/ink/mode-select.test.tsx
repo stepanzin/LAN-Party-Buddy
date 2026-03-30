@@ -1,16 +1,14 @@
-import React from 'react';
-import { describe, it, expect, mock } from 'bun:test';
-import { render } from 'ink-testing-library';
+import { describe, expect, it, mock } from 'bun:test';
 import { WelcomeScreen } from '@adapters/ink-tui/components/welcome-screen';
+import { render } from 'ink-testing-library';
+import React from 'react';
 
-const tick = () => new Promise(r => setTimeout(r, 30));
+const tick = () => new Promise((r) => setTimeout(r, 30));
 
 describe('Mode Select (WelcomeScreen)', () => {
   it('renders 3 mode options', () => {
     const onSelect = mock(() => {});
-    const { lastFrame, unmount } = render(
-      React.createElement(WelcomeScreen, { onSelect }),
-    );
+    const { lastFrame, unmount } = render(React.createElement(WelcomeScreen, { onSelect }));
     const frame = lastFrame();
     expect(frame).toContain('Local Mode');
     expect(frame).toContain('Host Mode');
@@ -20,9 +18,7 @@ describe('Mode Select (WelcomeScreen)', () => {
 
   it('all modes are available (none disabled)', () => {
     const onSelect = mock(() => {});
-    const { lastFrame, unmount } = render(
-      React.createElement(WelcomeScreen, { onSelect }),
-    );
+    const { lastFrame, unmount } = render(React.createElement(WelcomeScreen, { onSelect }));
     const frame = lastFrame();
     expect(frame).not.toContain('coming soon');
     unmount();
@@ -30,9 +26,7 @@ describe('Mode Select (WelcomeScreen)', () => {
 
   it('arrow navigation works', async () => {
     const onSelect = mock(() => {});
-    const { lastFrame, stdin, unmount } = render(
-      React.createElement(WelcomeScreen, { onSelect }),
-    );
+    const { lastFrame, stdin, unmount } = render(React.createElement(WelcomeScreen, { onSelect }));
 
     // Initially first item selected (Local Mode)
     expect(lastFrame()).toContain('▸');
@@ -63,9 +57,7 @@ describe('Mode Select (WelcomeScreen)', () => {
 
   it('Enter calls onSelect with "local" for first item', async () => {
     const onSelect = mock(() => {});
-    const { stdin, unmount } = render(
-      React.createElement(WelcomeScreen, { onSelect }),
-    );
+    const { stdin, unmount } = render(React.createElement(WelcomeScreen, { onSelect }));
 
     // Press Enter on first item (Local Mode)
     stdin.write('\r');
@@ -76,9 +68,7 @@ describe('Mode Select (WelcomeScreen)', () => {
 
   it('Enter calls onSelect with "host" for second item', async () => {
     const onSelect = mock(() => {});
-    const { stdin, unmount } = render(
-      React.createElement(WelcomeScreen, { onSelect }),
-    );
+    const { stdin, unmount } = render(React.createElement(WelcomeScreen, { onSelect }));
 
     // Navigate to Host Mode
     stdin.write('\x1b[B');
@@ -91,9 +81,7 @@ describe('Mode Select (WelcomeScreen)', () => {
 
   it('Enter calls onSelect with "join" for third item', async () => {
     const onSelect = mock(() => {});
-    const { stdin, unmount } = render(
-      React.createElement(WelcomeScreen, { onSelect }),
-    );
+    const { stdin, unmount } = render(React.createElement(WelcomeScreen, { onSelect }));
 
     // Navigate to Join Mode
     stdin.write('\x1b[B');

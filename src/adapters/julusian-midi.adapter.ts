@@ -1,8 +1,8 @@
-import midi from '@julusian/midi';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
-import type { MidiOutputPort } from '@ports/midi-output.port';
-import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
 import { parseMidiCC } from '@domain/midi-message';
+import midi from '@julusian/midi';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import type { MidiErrorHandler, MidiInputPort, MidiMessageHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
 
 /**
  * Check whether a MIDI port with the given name already exists on the system.
@@ -95,6 +95,6 @@ export class JulusianDeviceDiscoveryAdapter implements DeviceDiscoveryPort {
   }
 
   isDeviceConnected(deviceName: string): boolean {
-    return this.listDevices().some(d => d.name === deviceName);
+    return this.listDevices().some((d) => d.name === deviceName);
   }
 }

@@ -1,20 +1,18 @@
-import { describe, it, expect, mock } from 'bun:test';
-import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
-import type { MidiOutputPort } from '@ports/midi-output.port';
-import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
-import type { UserInterfacePort } from '@ports/user-interface.port';
-import type { ConfigReaderPort } from '@ports/config-reader.port';
-import type { StateStorePort, AppState } from '@ports/state-store.port';
-import type { AppConfig } from '@domain/config';
-import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { describe, expect, it, mock } from 'bun:test';
 import path from 'node:path';
+import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
+import type { AppConfig } from '@domain/config';
+import type { ConfigReaderPort } from '@ports/config-reader.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import type { MidiErrorHandler, MidiInputPort, MidiMessageHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { AppState, StateStorePort } from '@ports/state-store.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
 
 // --- Helpers ---
 
-const DEVICES: MidiDevice[] = [
-  { index: 0, name: 'Test Controller' },
-];
+const DEVICES: MidiDevice[] = [{ index: 0, name: 'Test Controller' }];
 
 function createMockMidiInput() {
   let messageHandler: MidiMessageHandler | null = null;
@@ -22,8 +20,12 @@ function createMockMidiInput() {
   const input: MidiInputPort = {
     open: mock((_idx: number) => {}),
     close: mock(() => {}),
-    onMessage: mock((handler: MidiMessageHandler) => { messageHandler = handler; }),
-    onError: mock((handler: MidiErrorHandler) => { errorHandler = handler; }),
+    onMessage: mock((handler: MidiMessageHandler) => {
+      messageHandler = handler;
+    }),
+    onError: mock((handler: MidiErrorHandler) => {
+      errorHandler = handler;
+    }),
   };
   return {
     input,
@@ -40,10 +42,7 @@ function createMockMidiOutput(): MidiOutputPort {
   };
 }
 
-function createMockDeviceDiscovery(
-  devicesSequence: MidiDevice[][],
-  connectionChecks: boolean[],
-): DeviceDiscoveryPort {
+function createMockDeviceDiscovery(devicesSequence: MidiDevice[][], connectionChecks: boolean[]): DeviceDiscoveryPort {
   let listCallCount = 0;
   let connCheckCount = 0;
   return {
@@ -129,7 +128,6 @@ function createMockDeps(overrides: MockDepsOverrides = {}) {
 // --- Smoke Tests ---
 
 describe('Smoke: MidiMapperApp', () => {
-
   it('starts and exits gracefully when no devices are connected', async () => {
     const deviceDiscovery = createMockDeviceDiscovery([[]], []);
     const ui = createMockUI();
@@ -140,9 +138,7 @@ describe('Smoke: MidiMapperApp', () => {
     // Should not throw
     await app.run('config.yaml', true);
 
-    expect(ui.showError).toHaveBeenCalledWith(
-      'No MIDI input devices found. Connect a device and try again.',
-    );
+    expect(ui.showError).toHaveBeenCalledWith('No MIDI input devices found. Connect a device and try again.');
   });
 
   it('handles valid config.yaml without crashing', async () => {
@@ -153,7 +149,7 @@ describe('Smoke: MidiMapperApp', () => {
     const midiOutput = createMockMidiOutput();
     const deviceDiscovery = createMockDeviceDiscovery(
       [DEVICES, []], // first: device present, second: no devices -> exit
-      [false],       // immediate disconnect
+      [false], // immediate disconnect
     );
     const ui = createMockUI(0);
     const stateStore = createMockStateStore();
@@ -185,10 +181,47 @@ describe('Smoke: MidiMapperApp', () => {
       deviceName: 'Full Feature Test',
       rules: [
         { cc: 1, label: 'Linear', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
-        { cc: 2, label: 'Log + Smoothing', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'logarithmic' as const, smoothing: 4 },
-        { cc: 3, label: 'Exp + Invert', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'exponential' as const, invert: true },
-        { cc: 4, label: 'S-Curve + DeadZone', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 's-curve' as const, deadZoneMin: 10, deadZoneMax: 117 },
-        { cc: 5, label: 'Toggle Mode', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const, mode: 'toggle' as const },
+        {
+          cc: 2,
+          label: 'Log + Smoothing',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'logarithmic' as const,
+          smoothing: 4,
+        },
+        {
+          cc: 3,
+          label: 'Exp + Invert',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'exponential' as const,
+          invert: true,
+        },
+        {
+          cc: 4,
+          label: 'S-Curve + DeadZone',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 's-curve' as const,
+          deadZoneMin: 10,
+          deadZoneMax: 117,
+        },
+        {
+          cc: 5,
+          label: 'Toggle Mode',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear' as const,
+          mode: 'toggle' as const,
+        },
       ],
       macros: [
         {
@@ -204,10 +237,7 @@ describe('Smoke: MidiMapperApp', () => {
 
     const midiInput = createMockMidiInput();
     const midiOutput = createMockMidiOutput();
-    const deviceDiscovery = createMockDeviceDiscovery(
-      [DEVICES, []],
-      [false],
-    );
+    const deviceDiscovery = createMockDeviceDiscovery([DEVICES, []], [false]);
     const ui = createMockUI(0);
     const configReader = createMockConfigReader(fullConfig);
 
@@ -218,17 +248,17 @@ describe('Smoke: MidiMapperApp', () => {
 
     // Send messages through each rule and the macro
     const testMessages = [
-      { channel: 0, cc: 1, value: 64 },   // linear
-      { channel: 0, cc: 2, value: 80 },   // logarithmic + smoothing
-      { channel: 0, cc: 2, value: 85 },   // second smoothing sample
-      { channel: 0, cc: 3, value: 100 },  // exponential + invert
-      { channel: 0, cc: 4, value: 5 },    // s-curve + dead zone (below min)
-      { channel: 0, cc: 4, value: 64 },   // s-curve + dead zone (normal)
-      { channel: 0, cc: 4, value: 125 },  // s-curve + dead zone (above max)
-      { channel: 0, cc: 5, value: 127 },  // toggle on
-      { channel: 0, cc: 5, value: 0 },    // toggle release
-      { channel: 0, cc: 5, value: 127 },  // toggle off
-      { channel: 0, cc: 10, value: 64 },  // macro
+      { channel: 0, cc: 1, value: 64 }, // linear
+      { channel: 0, cc: 2, value: 80 }, // logarithmic + smoothing
+      { channel: 0, cc: 2, value: 85 }, // second smoothing sample
+      { channel: 0, cc: 3, value: 100 }, // exponential + invert
+      { channel: 0, cc: 4, value: 5 }, // s-curve + dead zone (below min)
+      { channel: 0, cc: 4, value: 64 }, // s-curve + dead zone (normal)
+      { channel: 0, cc: 4, value: 125 }, // s-curve + dead zone (above max)
+      { channel: 0, cc: 5, value: 127 }, // toggle on
+      { channel: 0, cc: 5, value: 0 }, // toggle release
+      { channel: 0, cc: 5, value: 127 }, // toggle off
+      { channel: 0, cc: 10, value: 64 }, // macro
     ];
 
     for (const msg of testMessages) {
@@ -238,16 +268,15 @@ describe('Smoke: MidiMapperApp', () => {
     // Verify all messages were processed (logMapping called for each)
     expect(ui.logMapping).toHaveBeenCalledTimes(testMessages.length);
     // Verify output was sent for each message (at least NRPN preamble + main)
-    expect((midiOutput.send as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThanOrEqual(testMessages.length * 3);
+    expect((midiOutput.send as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThanOrEqual(
+      testMessages.length * 3,
+    );
   });
 
   it('survives rapid message throughput (100 messages)', async () => {
     const midiInput = createMockMidiInput();
     const midiOutput = createMockMidiOutput();
-    const deviceDiscovery = createMockDeviceDiscovery(
-      [DEVICES, []],
-      [false],
-    );
+    const deviceDiscovery = createMockDeviceDiscovery([DEVICES, []], [false]);
     const ui = createMockUI(0);
 
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui });
@@ -298,8 +327,6 @@ describe('Smoke: MidiMapperApp', () => {
     expect(listCalls).toBe(2);
 
     // Verify the second iteration exited cleanly via "no devices" path
-    expect(ui.showError).toHaveBeenCalledWith(
-      'No MIDI input devices found. Connect a device and try again.',
-    );
+    expect(ui.showError).toHaveBeenCalledWith('No MIDI input devices found. Connect a device and try again.');
   });
 });

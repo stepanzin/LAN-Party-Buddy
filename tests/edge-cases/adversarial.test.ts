@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'bun:test';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
-import type { CompiledRules, CompiledMacros, CompiledRule } from '@domain/mapping-rule';
-import type { MidiCC } from '@domain/midi-message';
-import { mapValueClamped, mapValueExponential, mapValueSCurve, mapValueLogClamped } from '@domain/value-curves';
-import { buildRules, buildMacros } from '@app/rule-compiler';
+import { describe, expect, it } from 'bun:test';
 import { parseConfig } from '@adapters/yaml-config.adapter';
+import { buildMacros, buildRules } from '@app/rule-compiler';
 import type { AppConfig } from '@domain/config';
+import { type EngineState, INITIAL_ENGINE_STATE, processMidiMessage } from '@domain/mapping-engine';
+import type { CompiledMacros, CompiledRules } from '@domain/mapping-rule';
+import type { MidiCC } from '@domain/midi-message';
+import { mapValueClamped, mapValueExponential, mapValueLogClamped, mapValueSCurve } from '@domain/value-curves';
 
 // -------------------------------------------------------------------------
 // Bug #1: NaN propagation — clampMidi(NaN) returns NaN
@@ -61,11 +61,19 @@ describe('BUG: Inverted input range (inputMin > inputMax)', () => {
   it('buildRules with deadZoneMin > deadZoneMax should handle gracefully', () => {
     const config: AppConfig = {
       deviceName: 'Test',
-      rules: [{
-        cc: 1, label: 'X', inputMin: 0, inputMax: 127,
-        outputMin: 0, outputMax: 127, curve: 'linear',
-        deadZoneMin: 120, deadZoneMax: 5, // inverted!
-      }],
+      rules: [
+        {
+          cc: 1,
+          label: 'X',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear',
+          deadZoneMin: 120,
+          deadZoneMax: 5, // inverted!
+        },
+      ],
     };
     const rules = buildRules(config);
     // Should not crash. Value 64 should produce some number
@@ -134,14 +142,15 @@ describe('Edge: Toggle mode with smoothing enabled', () => {
     };
     // Press: value=127 → toggle ON
     const { result: r1, nextState: s1 } = processMidiMessage(
-      { channel: 0, cc: 64, value: 127 }, rules, {}, INITIAL_ENGINE_STATE,
+      { channel: 0, cc: 64, value: 127 },
+      rules,
+      {},
+      INITIAL_ENGINE_STATE,
     );
     expect(r1.log.mappedValue).toBe(127); // ON
 
     // Press again: value=127 → toggle OFF
-    const { result: r2 } = processMidiMessage(
-      { channel: 0, cc: 64, value: 127 }, rules, {}, s1,
-    );
+    const { result: r2 } = processMidiMessage({ channel: 0, cc: 64, value: 127 }, rules, {}, s1);
     expect(r2.log.mappedValue).toBe(0); // OFF
   });
 });
@@ -154,9 +163,7 @@ describe('Edge: Smoothing edge cases', () => {
     const rules: CompiledRules = {
       '1': { transform: (v) => v, smoothing: 1, mode: 'normal' },
     };
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 1, value: 100 }, rules, {}, INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 1, value: 100 }, rules, {}, INITIAL_ENGINE_STATE);
     expect(result.log.mappedValue).toBe(100);
   });
 
@@ -168,9 +175,7 @@ describe('Edge: Smoothing edge cases', () => {
     let state: EngineState = INITIAL_ENGINE_STATE;
     // Send one message per CC
     for (let i = 0; i < 128; i++) {
-      const { nextState } = processMidiMessage(
-        { channel: 0, cc: i, value: 64 }, rules, {}, state,
-      );
+      const { nextState } = processMidiMessage({ channel: 0, cc: i, value: 64 }, rules, {}, state);
       state = nextState;
     }
     // Should have 128 buffers, each with 1 entry
@@ -185,10 +190,17 @@ describe('Edge: Degenerate output ranges', () => {
   it('outputMin === outputMax produces constant output', () => {
     const config: AppConfig = {
       deviceName: 'Test',
-      rules: [{
-        cc: 1, label: 'X', inputMin: 0, inputMax: 127,
-        outputMin: 64, outputMax: 64, curve: 'linear',
-      }],
+      rules: [
+        {
+          cc: 1,
+          label: 'X',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 64,
+          outputMax: 64,
+          curve: 'linear',
+        },
+      ],
     };
     const rules = buildRules(config);
     expect(rules['1']!.transform(0)).toBe(64);
@@ -199,10 +211,18 @@ describe('Edge: Degenerate output ranges', () => {
   it('outputMin === outputMax with invert still produces constant', () => {
     const config: AppConfig = {
       deviceName: 'Test',
-      rules: [{
-        cc: 1, label: 'X', inputMin: 0, inputMax: 127,
-        outputMin: 64, outputMax: 64, curve: 'linear', invert: true,
-      }],
+      rules: [
+        {
+          cc: 1,
+          label: 'X',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 64,
+          outputMax: 64,
+          curve: 'linear',
+          invert: true,
+        },
+      ],
     };
     const rules = buildRules(config);
     expect(rules['1']!.transform(0)).toBe(64);
@@ -236,12 +256,10 @@ describe('Edge: CC 49 NRPN special case', () => {
     const rules: CompiledRules = {
       '49': { transform: (v) => v, smoothing: 0, mode: 'toggle' },
     };
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 49, value: 127 }, rules, {}, INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 49, value: 127 }, rules, {}, INITIAL_ENGINE_STATE);
     // NRPN preamble for CC 49: [status, 99, 0], [status, 100, 127]
-    expect(result.outputMessages[0]).toEqual([0xB0, 99, 0]);
-    expect(result.outputMessages[1]).toEqual([0xB0, 100, 127]);
+    expect(result.outputMessages[0]).toEqual([0xb0, 99, 0]);
+    expect(result.outputMessages[1]).toEqual([0xb0, 100, 127]);
     // Toggle ON → 127
     expect(result.log.mappedValue).toBe(127);
   });
@@ -250,9 +268,7 @@ describe('Edge: CC 49 NRPN special case', () => {
     const macros: CompiledMacros = {
       '49': [{ outputCc: 74, transform: (v) => v }],
     };
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 49, value: 100 }, {}, macros, INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 49, value: 100 }, {}, macros, INITIAL_ENGINE_STATE);
     // [99,0], [100,127], [49,100], [74,100]
     expect(result.outputMessages.length).toBe(4);
   });
@@ -302,13 +318,17 @@ macros:
     const config: AppConfig = {
       deviceName: 'Test',
       rules: [{ cc: 1, label: 'Rule', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' }],
-      macros: [{ input: 1, label: 'Macro', outputs: [{ cc: 74, label: 'Out', outputMin: 0, outputMax: 127, curve: 'linear' }] }],
+      macros: [
+        {
+          input: 1,
+          label: 'Macro',
+          outputs: [{ cc: 74, label: 'Out', outputMin: 0, outputMax: 127, curve: 'linear' }],
+        },
+      ],
     };
     const rules = buildRules(config);
     const macros = buildMacros(config);
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 1, value: 64 }, rules, macros, INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 1, value: 64 }, rules, macros, INITIAL_ENGINE_STATE);
     // Should have: NRPN preamble (2) + main (1) + macro (1) = 4
     expect(result.outputMessages.length).toBe(4);
     expect(result.log.mappedValue).toBe(64);
@@ -320,20 +340,16 @@ macros:
 // -------------------------------------------------------------------------
 describe('Edge: Channel boundaries', () => {
   it('channel 15 (max) produces correct status byte 0xBF', () => {
-    const { result } = processMidiMessage(
-      { channel: 15, cc: 1, value: 64 }, {}, {}, INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 15, cc: 1, value: 64 }, {}, {}, INITIAL_ENGINE_STATE);
     for (const [status] of result.outputMessages) {
-      expect(status).toBe(0xBF);
+      expect(status).toBe(0xbf);
     }
   });
 
   it('channel 0 (min) produces correct status byte 0xB0', () => {
-    const { result } = processMidiMessage(
-      { channel: 0, cc: 1, value: 64 }, {}, {}, INITIAL_ENGINE_STATE,
-    );
+    const { result } = processMidiMessage({ channel: 0, cc: 1, value: 64 }, {}, {}, INITIAL_ENGINE_STATE);
     for (const [status] of result.outputMessages) {
-      expect(status).toBe(0xB0);
+      expect(status).toBe(0xb0);
     }
   });
 });

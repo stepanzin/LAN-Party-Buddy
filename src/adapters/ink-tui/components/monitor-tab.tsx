@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { StoreContext, EditorContext } from '../context';
+import { useContext } from 'react';
+import { EditorContext, StoreContext } from '../context';
 import { useTuiStore } from '../hooks/use-tui-store';
 
 function renderBar(value: number, width = 15): string {
@@ -18,7 +18,8 @@ export function MonitorTab() {
     if (input === 'a' && editor && state.unmapped.size > 0) {
       // Get most recent unmapped CC
       const entries = Array.from(state.unmapped.values());
-      const mostRecent = entries.sort((a, b) => b.lastSeen - a.lastSeen)[0]!;
+      const mostRecent = entries.sort((a, b) => b.lastSeen - a.lastSeen)[0];
+      if (!mostRecent) return;
 
       editor.addRule({
         cc: mostRecent.cc,
@@ -44,13 +45,14 @@ export function MonitorTab() {
 
   // Get recent timestamp for flash effect (activity within last 300ms)
   const now = Date.now();
-  const recentCCs = new Set(
-    state.activities.filter(a => now - a.timestamp < 300).map(a => a.cc)
-  );
+  const recentCCs = new Set(state.activities.filter((a) => now - a.timestamp < 300).map((a) => a.cc));
 
   return (
     <Box flexDirection="column">
-      <Text bold dimColor>  Rules</Text>
+      <Text bold dimColor>
+        {' '}
+        Rules
+      </Text>
       {config?.rules.map((rule, i) => {
         const activity = lastActivity.get(rule.cc);
         const active = recentCCs.has(rule.cc);
@@ -62,12 +64,8 @@ export function MonitorTab() {
             <Text color={active ? 'green' : 'white'}>
               {active ? '▸' : ' '} CC {rule.cc.toString().padStart(3)}
             </Text>
-            <Text color={active ? 'green' : 'gray'}>
-              {rule.label.padEnd(16).slice(0, 16)}
-            </Text>
-            <Text color={active ? 'green' : 'gray'}>
-              {renderBar(mapped)}
-            </Text>
+            <Text color={active ? 'green' : 'gray'}>{rule.label.padEnd(16).slice(0, 16)}</Text>
+            <Text color={active ? 'green' : 'gray'}>{renderBar(mapped)}</Text>
             <Text color={active ? 'green' : 'gray'}>
               {value.toString().padStart(3)} → {mapped.toString().padStart(3)}
             </Text>
@@ -81,12 +79,21 @@ export function MonitorTab() {
       {/* Macros */}
       {config?.macros && config.macros.length > 0 && (
         <Box flexDirection="column" marginTop={1}>
-          <Text bold dimColor>  Macros</Text>
+          <Text bold dimColor>
+            {' '}
+            Macros
+          </Text>
           {config.macros.map((macro, i) => (
             <Box key={`macro-${i}`} flexDirection="column">
-              <Text>  CC {macro.input.toString().padStart(3)}  {macro.label}</Text>
+              <Text>
+                {' '}
+                CC {macro.input.toString().padStart(3)} {macro.label}
+              </Text>
               {macro.outputs.map((out, j) => (
-                <Text key={j} dimColor>    → CC {out.cc.toString().padStart(3)}  {out.label}</Text>
+                <Text key={j} dimColor>
+                  {' '}
+                  → CC {out.cc.toString().padStart(3)} {out.label}
+                </Text>
               ))}
             </Box>
           ))}
@@ -96,29 +103,46 @@ export function MonitorTab() {
       {/* Unmapped */}
       {state.unmapped.size > 0 && (
         <Box flexDirection="column" marginTop={1}>
-          <Text bold dimColor>  Unmapped</Text>
-          {Array.from(state.unmapped.values()).slice(-5).map((u) => (
-            <Text key={u.cc} color="yellow">
-              {'  '}? CC {u.cc.toString().padStart(3)}  value: {u.value}
-            </Text>
-          ))}
-          <Text color="gray">  [A] Add most recent as rule</Text>
+          <Text bold dimColor>
+            {' '}
+            Unmapped
+          </Text>
+          {Array.from(state.unmapped.values())
+            .slice(-5)
+            .map((u) => (
+              <Text key={u.cc} color="yellow">
+                {'  '}? CC {u.cc.toString().padStart(3)} value: {u.value}
+              </Text>
+            ))}
+          <Text color="gray"> [A] Add most recent as rule</Text>
         </Box>
       )}
 
       {/* Network */}
       {state.mode === 'host' && state.connectedClients.length > 0 && (
         <>
-          <Text bold dimColor>  Network</Text>
-          {state.connectedClients.map(c => (
-            <Text key={c.id} dimColor>   ● {c.address}</Text>
+          <Text bold dimColor>
+            {' '}
+            Network
+          </Text>
+          {state.connectedClients.map((c) => (
+            <Text key={c.id} dimColor>
+              {' '}
+              ● {c.address}
+            </Text>
           ))}
         </>
       )}
       {state.mode === 'join' && state.connectedHost && (
         <>
-          <Text bold dimColor>  Network</Text>
-          <Text dimColor>   Connected: {state.connectedHost.name} ({state.connectedHost.address})</Text>
+          <Text bold dimColor>
+            {' '}
+            Network
+          </Text>
+          <Text dimColor>
+            {' '}
+            Connected: {state.connectedHost.name} ({state.connectedHost.address})
+          </Text>
         </>
       )}
     </Box>

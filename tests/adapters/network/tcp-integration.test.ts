@@ -1,6 +1,6 @@
-import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '@adapters/network/tcp-server';
+import { afterEach, describe, expect, it } from 'bun:test';
 import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpServer } from '@adapters/network/tcp-server';
 import { encodeCC, encodeDisconnect } from '@domain/network-protocol';
 
 const PORT_BASE = 19000; // avoid conflicts
@@ -11,7 +11,10 @@ const nextPort = () => ++port;
 const waitForEvent = (emitter: any, event: string, timeout = 2000) =>
   new Promise<any>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Timeout waiting for ${event}`)), timeout);
-    emitter.once(event, (...args: any[]) => { clearTimeout(timer); resolve(args); });
+    emitter.once(event, (...args: any[]) => {
+      clearTimeout(timer);
+      resolve(args);
+    });
   });
 
 describe('TCP Server + Client Integration', () => {
@@ -48,7 +51,7 @@ describe('TCP Server + Client Integration', () => {
     const client = new TcpClient();
     clients.push(client);
     await client.connect('127.0.0.1', p);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
 
     const msgPromise = waitForEvent(client, 'message');
     server.broadcast(encodeCC(0, 10, 64));
@@ -68,7 +71,7 @@ describe('TCP Server + Client Integration', () => {
     await client1.connect('127.0.0.1', p);
     await client2.connect('127.0.0.1', p);
 
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
     expect(server.getClientCount()).toBe(2);
 
     const p1 = waitForEvent(client1, 'message');
@@ -117,7 +120,7 @@ describe('TCP Server + Client Integration', () => {
     clients.push(client);
     await client.connect('127.0.0.1', p, '4321');
 
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
     const msgPromise = waitForEvent(client, 'message');
     server.broadcast(encodeCC(0, 5, 127));
     const [msg] = await msgPromise;
@@ -134,7 +137,7 @@ describe('TCP Server + Client Integration', () => {
     const client = new TcpClient();
     clients.push(client);
     await client.connect('127.0.0.1', p);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
 
     expect(server.getClientCount()).toBe(1);
     const disconnectPromise = waitForEvent(server, 'clientDisconnected');
@@ -169,7 +172,7 @@ describe('TCP Server + Client Integration', () => {
     const client = new TcpClient();
     clients.push(client);
     await client.connect('127.0.0.1', p);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
 
     const clients_list = server.getClients();
     expect(clients_list.length).toBe(1);
@@ -186,7 +189,7 @@ describe('TCP Server + Client Integration', () => {
     const client = new TcpClient();
     clients.push(client);
     await client.connect('127.0.0.1', p);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
 
     const msgPromise = waitForEvent(server, 'message');
     client.send(encodeCC(2, 30, 90));
@@ -205,7 +208,7 @@ describe('TCP Server + Client Integration', () => {
     const client = new TcpClient();
     clients.push(client);
     await client.connect('127.0.0.1', p);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
 
     const disconnectPromise = waitForEvent(client, 'disconnected');
     server.broadcast(encodeDisconnect());
@@ -245,7 +248,7 @@ describe('TCP Server + Client Integration', () => {
     const client = new TcpClient();
     clients.push(client);
     await client.connect('127.0.0.1', p);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
 
     const msgPromise = waitForEvent(client, 'message');
     const [msg] = await msgPromise;
@@ -270,7 +273,9 @@ describe('TCP Server + Client Integration', () => {
     const errors: Error[] = [];
     client.on('error', (err) => errors.push(err));
     let resolved = false;
-    const handlers = client.buildSocketHandlers((val) => { resolved = true; });
+    const handlers = client.buildSocketHandlers((val) => {
+      resolved = true;
+    });
     handlers.error({} as any, new Error('test socket error'));
     expect(errors.length).toBe(1);
     expect(errors[0]!.message).toBe('test socket error');

@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import { unlink } from 'node:fs/promises';
-import { parse as parseYaml } from 'yaml';
-import { YamlConfigAdapter, YamlConfigWriterAdapter, parseConfig } from '@adapters/yaml-config.adapter';
+import { parseConfig, YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
 import type { AppConfig } from '@domain/config';
+import { parse as parseYaml } from 'yaml';
 
 // ---------------------------------------------------------------------------
 // parseConfig (unit tests — moved from config-loader.test.ts)
@@ -313,127 +313,179 @@ rules:
 `;
 
     it('throws when cc is missing', () => {
-      expect(() => parseConfig(makeYaml(`
+      expect(() =>
+        parseConfig(
+          makeYaml(`
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/cc/);
+    curve: linear`),
+        ),
+      ).toThrow(/cc/);
     });
 
     it('throws when cc is negative', () => {
-      expect(() => parseConfig(makeYaml(`cc: -1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: -1
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/cc/);
+    curve: linear`),
+        ),
+      ).toThrow(/cc/);
     });
 
     it('throws when cc > 127', () => {
-      expect(() => parseConfig(makeYaml(`cc: 128
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 128
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/cc/);
+    curve: linear`),
+        ),
+      ).toThrow(/cc/);
     });
 
     it('throws when cc is not an integer', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1.5
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1.5
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/cc/);
+    curve: linear`),
+        ),
+      ).toThrow(/cc/);
     });
 
     it('throws when label is missing', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/label/);
+    curve: linear`),
+        ),
+      ).toThrow(/label/);
     });
 
     it('throws when label is not a string', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: 123
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/label/);
+    curve: linear`),
+        ),
+      ).toThrow(/label/);
     });
 
     it('throws when inputMin is missing', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/inputMin/);
+    curve: linear`),
+        ),
+      ).toThrow(/inputMin/);
     });
 
     it('throws when inputMin is not a number', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMin: "zero"
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/inputMin/);
+    curve: linear`),
+        ),
+      ).toThrow(/inputMin/);
     });
 
     it('throws when inputMax is missing', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMin: 0
     outputMin: 0
     outputMax: 127
-    curve: linear`))).toThrow(/inputMax/);
+    curve: linear`),
+        ),
+      ).toThrow(/inputMax/);
     });
 
     it('throws when outputMin is missing', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMax: 127
-    curve: linear`))).toThrow(/outputMin/);
+    curve: linear`),
+        ),
+      ).toThrow(/outputMin/);
     });
 
     it('throws when outputMax is missing', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
-    curve: linear`))).toThrow(/outputMax/);
+    curve: linear`),
+        ),
+      ).toThrow(/outputMax/);
     });
 
     it('throws when curve is missing', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
-    outputMax: 127`))).toThrow(/curve/);
+    outputMax: 127`),
+        ),
+      ).toThrow(/curve/);
     });
 
     it('throws when curve is invalid value', () => {
-      expect(() => parseConfig(makeYaml(`cc: 1
+      expect(() =>
+        parseConfig(
+          makeYaml(`cc: 1
     label: "X"
     inputMin: 0
     inputMax: 127
     outputMin: 0
     outputMax: 127
-    curve: quadratic`))).toThrow(/curve/);
+    curve: quadratic`),
+        ),
+      ).toThrow(/curve/);
     });
 
     it('includes rule index in error for second rule', () => {
@@ -672,143 +724,201 @@ macros: "not an array"
     });
 
     it('throws when macro input is missing', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - label: "M"
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - label: "M"
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\].*input/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\].*input/);
     });
 
     it('throws when macro input is not an integer 0-127', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 200
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 200
     label: "M"
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\].*input/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\].*input/);
     });
 
     it('throws when macro input is not an integer', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 1.5
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 1.5
     label: "M"
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\].*input/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\].*input/);
     });
 
     it('throws when macro label is missing', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\].*label/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\].*label/);
     });
 
     it('throws when macro label is not a string', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: 123
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\].*label/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\].*label/);
     });
 
     it('throws when macro outputs is missing', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
-    label: "M"`))).toThrow(/macro\[0\].*outputs/);
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
+    label: "M"`),
+        ),
+      ).toThrow(/macro\[0\].*outputs/);
     });
 
     it('throws when macro outputs is empty', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
-    outputs: []`))).toThrow(/macro\[0\].*outputs/);
+    outputs: []`),
+        ),
+      ).toThrow(/macro\[0\].*outputs/);
     });
 
     it('throws when macro output is not an object', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
-      - "not an object"`))).toThrow(/macro\[0\]\.outputs\[0\]/);
+      - "not an object"`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\]/);
     });
 
     it('throws when macro output cc is invalid', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 200
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\]\.outputs\[0\].*cc/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*cc/);
     });
 
     it('throws when macro output cc is not an integer', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 1.5
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\]\.outputs\[0\].*cc/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*cc/);
     });
 
     it('throws when macro output label is missing', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 20
         outputMin: 0
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\]\.outputs\[0\].*label/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*label/);
     });
 
     it('throws when macro output outputMin is not a number', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 20
         label: "O"
         outputMin: "zero"
         outputMax: 127
-        curve: linear`))).toThrow(/macro\[0\]\.outputs\[0\].*outputMin/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*outputMin/);
     });
 
     it('throws when macro output outputMax is not a number', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: "max"
-        curve: linear`))).toThrow(/macro\[0\]\.outputs\[0\].*outputMax/);
+        curve: linear`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*outputMax/);
     });
 
     it('throws when macro output curve is invalid', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 20
         label: "O"
         outputMin: 0
         outputMax: 127
-        curve: quadratic`))).toThrow(/macro\[0\]\.outputs\[0\].*curve/);
+        curve: quadratic`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*curve/);
     });
 
     it('throws when macro output invert is not a boolean', () => {
-      expect(() => parseConfig(baseMacroYaml(`  - input: 10
+      expect(() =>
+        parseConfig(
+          baseMacroYaml(`  - input: 10
     label: "M"
     outputs:
       - cc: 20
@@ -816,7 +926,9 @@ macros: "not an array"
         outputMin: 0
         outputMax: 127
         curve: linear
-        invert: "yes"`))).toThrow(/macro\[0\]\.outputs\[0\].*invert/);
+        invert: "yes"`),
+        ),
+      ).toThrow(/macro\[0\]\.outputs\[0\].*invert/);
     });
   });
 });
@@ -828,7 +940,9 @@ describe('YamlConfigAdapter', () => {
   describe('load', () => {
     it('loads and parses a valid YAML file', async () => {
       const tmp = `/tmp/midi-mapper-adapter-test-${Date.now()}.yaml`;
-      await Bun.write(tmp, `
+      await Bun.write(
+        tmp,
+        `
 deviceName: "File Test"
 rules:
   - cc: 1
@@ -838,7 +952,8 @@ rules:
     outputMin: 0
     outputMax: 127
     curve: linear
-`);
+`,
+      );
       const adapter = new YamlConfigAdapter();
       const config = await adapter.load(tmp);
       expect(config.deviceName).toBe('File Test');
@@ -882,9 +997,7 @@ describe('YamlConfigWriterAdapter', () => {
       {
         input: 10,
         label: 'Macro1',
-        outputs: [
-          { cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'exponential' },
-        ],
+        outputs: [{ cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'exponential' }],
       },
     ],
   };

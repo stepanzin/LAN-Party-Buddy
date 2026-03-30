@@ -9,11 +9,11 @@ export type RuleConfig = {
   readonly outputMin: number;
   readonly outputMax: number;
   readonly curve: Curve;
-  readonly smoothing?: number;      // sliding average window size (0 = off)
-  readonly invert?: boolean;        // reverse output direction
-  readonly mode?: Mode;             // normal | toggle
-  readonly deadZoneMin?: number;    // values below → clamped to inputMin
-  readonly deadZoneMax?: number;    // values above → clamped to inputMax
+  readonly smoothing?: number; // sliding average window size (0 = off)
+  readonly invert?: boolean; // reverse output direction
+  readonly mode?: Mode; // normal | toggle
+  readonly deadZoneMin?: number; // values below → clamped to inputMin
+  readonly deadZoneMax?: number; // values above → clamped to inputMax
 };
 
 export type MacroOutput = {
@@ -26,15 +26,15 @@ export type MacroOutput = {
 };
 
 export type MacroConfig = {
-  readonly input: number;           // input CC number
+  readonly input: number; // input CC number
   readonly label: string;
   readonly outputs: readonly MacroOutput[];
 };
 
 export type NetworkConfig = {
-  readonly port?: number;        // TCP port, default 9900
-  readonly pin?: string;         // 4-char PIN string, undefined = open
-  readonly hostName?: string;    // mDNS advertised name
+  readonly port?: number; // TCP port, default 9900
+  readonly pin?: string; // 4-char PIN string, undefined = open
+  readonly hostName?: string; // mDNS advertised name
 };
 
 export type AppConfig = {

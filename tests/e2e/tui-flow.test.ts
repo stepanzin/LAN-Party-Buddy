@@ -1,19 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-
-import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
-import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
-import { JsonStateAdapter } from '@adapters/json-state.adapter';
-import { ConfigEditorService } from '@app/config-editor.service';
-import { YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
-import { TuiStore } from '@adapters/ink-tui/tui-store';
+import { join } from 'node:path';
 import { InkTuiAdapter } from '@adapters/ink-tui/ink-tui.adapter';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
-import type { MidiOutputPort } from '@ports/midi-output.port';
+import { TuiStore } from '@adapters/ink-tui/tui-store';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
+import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { ConfigEditorService } from '@app/config-editor.service';
+import { MidiMapperApp } from '@app/midi-mapper.app';
 import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
-import type { AppConfig } from '@domain/config';
+import type { MidiErrorHandler, MidiInputPort, MidiMessageHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -58,7 +55,9 @@ function createMockMidiInput() {
   const input: MidiInputPort = {
     open: mock((_idx: number) => {}),
     close: mock(() => {}),
-    onMessage: mock((handler: MidiMessageHandler) => { messageHandler = handler; }),
+    onMessage: mock((handler: MidiMessageHandler) => {
+      messageHandler = handler;
+    }),
     onError: mock((_handler: MidiErrorHandler) => {}),
   };
   return {
@@ -73,16 +72,15 @@ function createMockMidiOutput() {
   const sentMessages: Array<readonly [number, number, number]> = [];
   const port: MidiOutputPort = {
     openVirtual: mock((_name: string) => {}),
-    send: mock((msg: readonly [number, number, number]) => { sentMessages.push(msg); }),
+    send: mock((msg: readonly [number, number, number]) => {
+      sentMessages.push(msg);
+    }),
     close: mock(() => {}),
   };
   return { port, sentMessages };
 }
 
-function createMockDeviceDiscovery(
-  devicesSequence: MidiDevice[][],
-  connectionChecks: boolean[],
-): DeviceDiscoveryPort {
+function createMockDeviceDiscovery(devicesSequence: MidiDevice[][], connectionChecks: boolean[]): DeviceDiscoveryPort {
   let listCount = 0;
   let connCount = 0;
   return {
@@ -152,17 +150,20 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       });
     }
 
-    const app = new MidiMapperApp({
-      midiInput: mockInput.input,
-      midiOutput: mockOutput.port,
-      deviceDiscovery: discovery,
-      ui: tuiAdapter,
-      configReader: configAdapter,
-      configWriter,
-      stateStore: stateAdapter,
-      monitor: tuiAdapter,
-      configEditor: editorService,
-    }, 10);
+    const app = new MidiMapperApp(
+      {
+        midiInput: mockInput.input,
+        midiOutput: mockOutput.port,
+        deviceDiscovery: discovery,
+        ui: tuiAdapter,
+        configReader: configAdapter,
+        configWriter,
+        stateStore: stateAdapter,
+        monitor: tuiAdapter,
+        configEditor: editorService,
+      },
+      10,
+    );
 
     app.setConfigEditorService(editorService);
 
@@ -181,9 +182,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
 
     await app.run(configPath, true);
 
-    expect(store.getState().systemMessage).toBe(
-      'No MIDI input devices found. Connect a device and try again.',
-    );
+    expect(store.getState().systemMessage).toBe('No MIDI input devices found. Connect a device and try again.');
   });
 
   it('store remains accessible after app.run returns (process stays alive scenario)', async () => {
@@ -353,7 +352,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
 
     // CC 4 currently maps linear 0-127 → 0-127
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 100 });
-    const cc4Before = mockOutput.sentMessages.filter(m => m[1] === 4);
+    const cc4Before = mockOutput.sentMessages.filter((m) => m[1] === 4);
     expect(cc4Before[0]![2]).toBe(100);
 
     // Update rule: invert CC 4
@@ -363,7 +362,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
 
     // Now CC 4 should be inverted: value 100 → 127 - 100 = 27 (approximately)
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 100 });
-    const cc4After = mockOutput.sentMessages.filter(m => m[1] === 4);
+    const cc4After = mockOutput.sentMessages.filter((m) => m[1] === 4);
     // Inverted: inputMin=0, inputMax=127, outputMin/Max swapped → 127→0 mapping
     // value 100 with inverted → round((127-100)/127 * 127) ≈ 27
     expect(cc4After[1]![2]).not.toBe(100); // different from before

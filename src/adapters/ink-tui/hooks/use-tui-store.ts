@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { TuiStore, TuiState } from '../tui-store';
+import type { TuiState, TuiStore } from '../tui-store';
 
 export function useTuiStore(store: TuiStore): Readonly<TuiState> {
   return useSyncExternalStore(

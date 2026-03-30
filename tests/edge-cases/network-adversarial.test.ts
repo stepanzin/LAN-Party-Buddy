@@ -1,14 +1,8 @@
-import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '@adapters/network/tcp-server';
+import { afterEach, describe, expect, it } from 'bun:test';
 import { TcpClient } from '@adapters/network/tcp-client';
-import {
-  encodeCC,
-  encodeHeartbeat,
-  encodeDisconnect,
-  encodePinChallenge,
-  MSG_CC,
-} from '@domain/network-protocol';
+import { TcpServer } from '@adapters/network/tcp-server';
 import type { NetworkMessage } from '@domain/network-protocol';
+import { encodeCC, encodeDisconnect, encodeHeartbeat, encodePinChallenge, MSG_CC } from '@domain/network-protocol';
 
 // ---------------------------------------------------------------------------
 // Port allocation — starts at 19300 to avoid conflicts with other suites
@@ -16,12 +10,15 @@ import type { NetworkMessage } from '@domain/network-protocol';
 let PORT = 19300;
 const nextPort = () => ++PORT;
 
-const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const waitForEvent = (emitter: any, event: string, timeout = 2000) =>
   new Promise<any>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Timeout waiting for ${event}`)), timeout);
-    emitter.once(event, (...args: any[]) => { clearTimeout(timer); resolve(args); });
+    emitter.once(event, (...args: any[]) => {
+      clearTimeout(timer);
+      resolve(args);
+    });
   });
 
 /** Collect N messages from an emitter */
@@ -66,7 +63,7 @@ describe('Network Edge Cases', () => {
     const msgPromise = waitForEvent(server, 'message', 3000);
 
     // Connect a raw TCP socket using Bun.connect
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -85,7 +82,7 @@ describe('Network Edge Cases', () => {
     await wait(50);
 
     // Send remaining 2 bytes: [cc=10, value=64]
-    rawSocket.write(new Uint8Array([0x0A, 0x40]));
+    rawSocket.write(new Uint8Array([0x0a, 0x40]));
 
     // Server should buffer and process the complete frame
     const [msg] = await msgPromise;
@@ -101,7 +98,7 @@ describe('Network Edge Cases', () => {
     server.start(p, 60000);
 
     // Connect raw socket
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -143,7 +140,7 @@ describe('Network Edge Cases', () => {
     server.on('message', (msg) => receivedMessages.push(msg));
 
     // Connect raw socket
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -181,7 +178,7 @@ describe('Network Edge Cases', () => {
     server.start(p, 60000);
 
     // Connect and immediately disconnect without sending any data
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -232,20 +229,22 @@ describe('Network Edge Cases', () => {
     // Connect and immediately disconnect 10 times in rapid succession
     const connectionPromises: Promise<void>[] = [];
     for (let i = 0; i < 10; i++) {
-      connectionPromises.push((async () => {
-        const rawSocket = await Bun.connect<{}>({
-          hostname: '127.0.0.1',
-          port: p,
-          socket: {
-            open() {},
-            data() {},
-            close() {},
-            error() {},
-          },
-          data: {},
-        });
-        rawSocket.end();
-      })());
+      connectionPromises.push(
+        (async () => {
+          const rawSocket = await Bun.connect<Record<string, never>>({
+            hostname: '127.0.0.1',
+            port: p,
+            socket: {
+              open() {},
+              data() {},
+              close() {},
+              error() {},
+            },
+            data: {},
+          });
+          rawSocket.end();
+        })(),
+      );
     }
 
     await Promise.all(connectionPromises);
@@ -266,7 +265,7 @@ describe('Network Edge Cases', () => {
     server.start(p, 60000);
 
     // Connect raw socket
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -345,7 +344,7 @@ describe('Network Edge Cases', () => {
     // Connect raw socket and send an empty-ish PIN (4 bytes of '0'-padded empty)
     // encodePinChallenge('') pads to '0000'
     let pinResponseByte: number | null = null;
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -384,7 +383,7 @@ describe('Network Edge Cases', () => {
 
     // Connect raw socket and send CC data without proper PIN first
     let pinResponseByte: number | null = null;
-    const rawSocket = await Bun.connect<{}>({
+    const rawSocket = await Bun.connect<Record<string, never>>({
       hostname: '127.0.0.1',
       port: p,
       socket: {
@@ -439,7 +438,7 @@ describe('Network Edge Cases', () => {
     expect(server.getClientCount()).toBe(50);
 
     // Set up message listeners on all clients before broadcasting
-    const messagePromises = allClients.map(c => waitForEvent(c, 'message', 5000));
+    const messagePromises = allClients.map((c) => waitForEvent(c, 'message', 5000));
 
     // Broadcast one message
     server.broadcast(encodeCC(0, 10, 64));
@@ -536,7 +535,7 @@ describe('Network Edge Cases', () => {
     expect(receivedMessages[0]!.type).toBe('heartbeat');
 
     // Verify no CC data leaks from heartbeat
-    const ccMessages = receivedMessages.filter(m => m.type === 'cc');
+    const ccMessages = receivedMessages.filter((m) => m.type === 'cc');
     expect(ccMessages.length).toBe(0);
   });
 

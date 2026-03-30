@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
 
 describe('StaticDeviceDiscoveryAdapter', () => {

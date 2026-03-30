@@ -1,8 +1,4 @@
-export function mapValueClamped(
-  value: number,
-  from: readonly [number, number],
-  to: readonly [number, number]
-): number {
+export function mapValueClamped(value: number, from: readonly [number, number], to: readonly [number, number]): number {
   const [a, b] = from;
   const [c, d] = to;
 
@@ -18,15 +14,14 @@ export function mapValueClamped(
 }
 
 export const mapValueClampedCurried =
-  (from: readonly [number, number], to: readonly [number, number]) =>
-  (value: number) =>
+  (from: readonly [number, number], to: readonly [number, number]) => (value: number) =>
     mapValueClamped(value, from, to);
 
 // typescript
 export function mapValueLogClamped(
   value: number,
   from: readonly [number, number],
-  to: readonly [number, number]
+  to: readonly [number, number],
 ): number {
   const [a, b] = from;
   const [c, d] = to;
@@ -46,19 +41,18 @@ export function mapValueLogClamped(
   const absD = Math.abs(d);
 
   const ratio = absD / absC;
-  const resultAbs = absC * Math.pow(ratio, t);
+  const resultAbs = absC * ratio ** t;
   return sign * resultAbs;
 }
 
 export const mapValueLogClampedCurried =
-  (from: readonly [number, number], to: readonly [number, number]) =>
-  (value: number) =>
+  (from: readonly [number, number], to: readonly [number, number]) => (value: number) =>
     mapValueLogClamped(value, from, to);
 
 export function mapValueExponential(
   value: number,
   from: readonly [number, number],
-  to: readonly [number, number]
+  to: readonly [number, number],
 ): number {
   const [a, b] = from;
   const [c, d] = to;
@@ -71,15 +65,10 @@ export function mapValueExponential(
 }
 
 export const mapValueExponentialCurried =
-  (from: readonly [number, number], to: readonly [number, number]) =>
-  (value: number) =>
+  (from: readonly [number, number], to: readonly [number, number]) => (value: number) =>
     mapValueExponential(value, from, to);
 
-export function mapValueSCurve(
-  value: number,
-  from: readonly [number, number],
-  to: readonly [number, number]
-): number {
+export function mapValueSCurve(value: number, from: readonly [number, number], to: readonly [number, number]): number {
   const [a, b] = from;
   const [c, d] = to;
 
@@ -91,6 +80,5 @@ export function mapValueSCurve(
 }
 
 export const mapValueSCurveCurried =
-  (from: readonly [number, number], to: readonly [number, number]) =>
-  (value: number) =>
+  (from: readonly [number, number], to: readonly [number, number]) => (value: number) =>
     mapValueSCurve(value, from, to);

@@ -1,12 +1,11 @@
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
-import { TcpClient } from './tcp-client';
-import { MdnsBrowserDiscoveryAdapter } from './mdns-browser-discovery.adapter';
 import type { NetworkMessage } from '@domain/network-protocol';
+import type { MidiErrorHandler, MidiInputPort, MidiMessageHandler } from '@ports/midi-input.port';
+import type { MdnsBrowserDiscoveryAdapter } from './mdns-browser-discovery.adapter';
+import type { TcpClient } from './tcp-client';
 
 export class TcpClientInputAdapter implements MidiInputPort {
   private client: TcpClient;
   private browser: MdnsBrowserDiscoveryAdapter;
-  private messageHandler: MidiMessageHandler | null = null;
 
   constructor(client: TcpClient, browser: MdnsBrowserDiscoveryAdapter) {
     this.client = client;
@@ -14,7 +13,6 @@ export class TcpClientInputAdapter implements MidiInputPort {
   }
 
   onMessage(handler: MidiMessageHandler): void {
-    this.messageHandler = handler;
     this.client.on('message', (msg: NetworkMessage) => {
       if (msg.type === 'cc') {
         handler({ channel: msg.channel, cc: msg.cc, value: msg.value });

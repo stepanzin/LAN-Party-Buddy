@@ -54,7 +54,7 @@ export type TuiState = {
   connectedHost: { name: string; address: string; port: number } | null;
 
   // Monitor
-  activities: ActivityEntry[];        // ring buffer, max 20
+  activities: ActivityEntry[]; // ring buffer, max 20
   macroActivities: MacroActivityEntry[];
   unmapped: Map<number, UnmappedEntry>;
 
@@ -66,7 +66,7 @@ export type TuiState = {
   midiLearnCaptured: number | null;
 
   // Log
-  logEntries: LogEntry[];             // ring buffer, max 200
+  logEntries: LogEntry[]; // ring buffer, max 200
 
   // Save feedback
   saveStatus: string | null;
@@ -150,7 +150,8 @@ export class TuiStore extends EventEmitter {
     if (unmapped.size > 20) {
       const sorted = [...unmapped.entries()].sort((a, b) => a[1].lastSeen - b[1].lastSeen);
       while (sorted.length > 20) {
-        const oldest = sorted.shift()!;
+        const oldest = sorted.shift();
+        if (!oldest) break;
         unmapped.delete(oldest[0]);
       }
     }
@@ -228,15 +229,12 @@ export class TuiStore extends EventEmitter {
   }
 
   addClient(client: { id: string; address: string }): void {
-    const connectedClients = [
-      ...this.state.connectedClients,
-      { ...client, connectedAt: Date.now() },
-    ];
+    const connectedClients = [...this.state.connectedClients, { ...client, connectedAt: Date.now() }];
     this.update({ connectedClients });
   }
 
   removeClient(clientId: string): void {
-    const connectedClients = this.state.connectedClients.filter(c => c.id !== clientId);
+    const connectedClients = this.state.connectedClients.filter((c) => c.id !== clientId);
     this.update({ connectedClients });
   }
 

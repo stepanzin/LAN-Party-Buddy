@@ -1,7 +1,7 @@
 // Message types
 export const MSG_CC = 0x01;
 export const MSG_HEARTBEAT = 0x02;
-export const MSG_DISCONNECT = 0xFF;
+export const MSG_DISCONNECT = 0xff;
 
 export type NetworkMessage =
   | { type: 'cc'; channel: number; cc: number; value: number }
@@ -26,9 +26,8 @@ export function decodeMessage(data: Uint8Array): NetworkMessage | null {
   if (data.length < 4) return null;
   const type = data[0];
   if (type === MSG_CC) {
-    const channel = data[1]!;
-    const cc = data[2]!;
-    const value = data[3]!;
+    const [, channel, cc, value] = data;
+    if (channel === undefined || cc === undefined || value === undefined) return null;
     if (channel > 15 || cc > 127 || value > 127) return null;
     return { type: 'cc', channel, cc, value };
   }

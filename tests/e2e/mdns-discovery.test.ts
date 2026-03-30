@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'bun:test';
+import { afterEach, describe, expect, it } from 'bun:test';
 import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
 import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 
@@ -23,11 +23,11 @@ describe('mDNS Advertiser + Browser Integration', () => {
     browser.startBrowsing();
 
     // Wait for discovery (mDNS can take a moment)
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 2000));
 
     const devices = browser.listDevices();
     expect(devices.length).toBeGreaterThanOrEqual(1);
-    const found = devices.some(d => d.name.includes('Test MIDI Host'));
+    const found = devices.some((d) => d.name.includes('Test MIDI Host'));
     expect(found).toBe(true);
   });
 
@@ -40,10 +40,10 @@ describe('mDNS Advertiser + Browser Integration', () => {
     browsers.push(browser);
     browser.startBrowsing();
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 2000));
 
     const devices = browser.listDevices();
-    const locked = devices.find(d => d.name.includes('Locked Host'));
+    const locked = devices.find((d) => d.name.includes('Locked Host'));
     expect(locked).toBeDefined();
     expect(locked!.name).toContain('🔒');
   });
@@ -57,10 +57,10 @@ describe('mDNS Advertiser + Browser Integration', () => {
     browsers.push(browser);
     browser.startBrowsing();
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 2000));
 
     const devices = browser.listDevices();
-    const idx = devices.findIndex(d => d.name.includes('Info Host'));
+    const idx = devices.findIndex((d) => d.name.includes('Info Host'));
     expect(idx).toBeGreaterThanOrEqual(0);
 
     const info = browser.getServiceByIndex(idx);
@@ -78,10 +78,10 @@ describe('mDNS Advertiser + Browser Integration', () => {
     browsers.push(browser);
     browser.startBrowsing();
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 2000));
 
     const devices = browser.listDevices();
-    const device = devices.find(d => d.name.includes('Visible Host'));
+    const device = devices.find((d) => d.name.includes('Visible Host'));
     expect(device).toBeDefined();
     expect(browser.isDeviceConnected(device!.name)).toBe(true);
     expect(browser.isDeviceConnected('nonexistent')).toBe(false);

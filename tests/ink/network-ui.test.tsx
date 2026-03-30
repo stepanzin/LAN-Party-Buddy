@@ -1,27 +1,23 @@
-import React from 'react';
-import { describe, it, expect } from 'bun:test';
-import { render } from 'ink-testing-library';
+import { describe, expect, it } from 'bun:test';
 import { App } from '@adapters/ink-tui/app';
 import { TuiStore } from '@adapters/ink-tui/tui-store';
 import type { AppConfig } from '@domain/config';
+import { render } from 'ink-testing-library';
+import React from 'react';
 
 const TEST_CONFIG: AppConfig = {
   deviceName: 'Test Output',
-  rules: [
-    { cc: 4, label: 'Expression', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' },
-  ],
+  rules: [{ cc: 4, label: 'Expression', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' }],
 };
 
-const tick = () => new Promise(r => setTimeout(r, 30));
+const tick = () => new Promise((r) => setTimeout(r, 30));
 
 function renderApp(mode: 'local' | 'host' | 'join' = 'local') {
   const store = new TuiStore();
   store.setConfig(TEST_CONFIG);
   store.setMode(mode);
 
-  const { lastFrame, stdin, unmount } = render(
-    React.createElement(App, { store }),
-  );
+  const { lastFrame, stdin, unmount } = render(React.createElement(App, { store }));
 
   return { store, lastFrame, stdin, unmount };
 }

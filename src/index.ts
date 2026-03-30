@@ -1,27 +1,29 @@
-import { parseArgs } from 'util';
-import { resolve, dirname } from 'node:path';
-
-import { MidiMapperApp } from '@app/midi-mapper.app';
-import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
-import { JsonStateAdapter } from '@adapters/json-state.adapter';
-import { JulusianMidiInputAdapter, JulusianMidiOutputAdapter, JulusianDeviceDiscoveryAdapter } from '@adapters/julusian-midi.adapter';
+import { dirname, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { InkTuiAdapter } from '@adapters/ink-tui/ink-tui.adapter';
 import { TuiStore } from '@adapters/ink-tui/tui-store';
-import { ConfigEditorService } from '@app/config-editor.service';
-import type { MidiInputPort } from '@ports/midi-input.port';
-import type { MidiOutputPort } from '@ports/midi-output.port';
-import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
-import type { WelcomeChoice } from '@ports/user-interface.port';
-
-// Network adapters
-import { TcpServer } from '@adapters/network/tcp-server';
-import { TcpClient } from '@adapters/network/tcp-client';
-import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
-import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
-import { VirtualPortInputAdapter } from '@adapters/network/virtual-port-input.adapter';
-import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
+import {
+  JulusianDeviceDiscoveryAdapter,
+  JulusianMidiInputAdapter,
+  JulusianMidiOutputAdapter,
+} from '@adapters/julusian-midi.adapter';
 import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
 import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
+import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+// Network adapters
+import { TcpServer } from '@adapters/network/tcp-server';
+import { VirtualPortInputAdapter } from '@adapters/network/virtual-port-input.adapter';
+import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { ConfigEditorService } from '@app/config-editor.service';
+import { MidiMapperApp } from '@app/midi-mapper.app';
+import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
+import type { MidiInputPort } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { WelcomeChoice } from '@ports/user-interface.port';
 
 const { values: args } = parseArgs({
   args: Bun.argv.slice(2),
@@ -33,19 +35,19 @@ const { values: args } = parseArgs({
 
 function findConfigPath(explicit?: string): { path: string; exists: boolean } {
   if (explicit) return { path: resolve(explicit), exists: true };
-  for (const p of [resolve('config.yaml'), resolve(dirname(Bun.argv[0]!), 'config.yaml')]) {
-    try { if (Bun.file(p).size > 0) return { path: p, exists: true }; } catch {}
+  const argv0 = Bun.argv[0] ?? '.';
+  for (const p of [resolve('config.yaml'), resolve(dirname(argv0), 'config.yaml')]) {
+    try {
+      if (Bun.file(p).size > 0) return { path: p, exists: true };
+    } catch {}
   }
-  return { path: resolve(dirname(Bun.argv[0]!), 'config.yaml'), exists: false };
+  return { path: resolve(dirname(argv0), 'config.yaml'), exists: false };
 }
 
 const { path: configPath, exists: configExists } = findConfigPath(args.config);
 const configWriter = new YamlConfigWriterAdapter();
 const store = new TuiStore();
-const editorService = new ConfigEditorService(
-  { deviceName: 'MIDI Mapper Output', rules: [] },
-  configWriter,
-);
+const editorService = new ConfigEditorService({ deviceName: 'MIDI Mapper Output', rules: [] }, configWriter);
 editorService.onConfigChanged = (c) => store.setConfig(c);
 const tuiAdapter = new InkTuiAdapter(store, editorService);
 
@@ -129,17 +131,20 @@ if (mode === 'host') {
   deviceDiscovery = new JulusianDeviceDiscoveryAdapter();
 }
 
-const app = new MidiMapperApp({
-  midiInput,
-  midiOutput,
-  deviceDiscovery,
-  ui: tuiAdapter,
-  configReader: new YamlConfigAdapter(),
-  configWriter,
-  stateStore: new JsonStateAdapter(),
-  monitor: tuiAdapter,
-  configEditor: editorService,
-}, 2000);
+const app = new MidiMapperApp(
+  {
+    midiInput,
+    midiOutput,
+    deviceDiscovery,
+    ui: tuiAdapter,
+    configReader: new YamlConfigAdapter(),
+    configWriter,
+    stateStore: new JsonStateAdapter(),
+    monitor: tuiAdapter,
+    configEditor: editorService,
+  },
+  2000,
+);
 
 app.setConfigEditorService(editorService);
 

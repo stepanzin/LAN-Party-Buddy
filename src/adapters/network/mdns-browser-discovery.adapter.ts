@@ -1,5 +1,5 @@
-import { Bonjour, type RemoteService } from 'bonjour-service';
 import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import { Bonjour, type RemoteService } from 'bonjour-service';
 
 export class MdnsBrowserDiscoveryAdapter implements DeviceDiscoveryPort {
   private bonjour: Bonjour;
@@ -13,12 +13,12 @@ export class MdnsBrowserDiscoveryAdapter implements DeviceDiscoveryPort {
   startBrowsing(): void {
     this.browser = this.bonjour.find({ type: 'midi-mapper' });
     this.browser.on('up', (service: RemoteService) => {
-      if (!this.services.some(s => s.name === service.name)) {
+      if (!this.services.some((s) => s.name === service.name)) {
         this.services.push(service);
       }
     });
     this.browser.on('down', (service: RemoteService) => {
-      this.services = this.services.filter(s => s.name !== service.name);
+      this.services = this.services.filter((s) => s.name !== service.name);
     });
   }
 
@@ -39,7 +39,7 @@ export class MdnsBrowserDiscoveryAdapter implements DeviceDiscoveryPort {
   }
 
   isDeviceConnected(deviceName: string): boolean {
-    return this.services.some(s => {
+    return this.services.some((s) => {
       const host = s.addresses?.[0] ?? s.host ?? 'unknown';
       const pinInfo = s.txt?.pin === 'required' ? ' 🔒' : '';
       return `${s.name} (${host}:${s.port})${pinInfo}` === deviceName;

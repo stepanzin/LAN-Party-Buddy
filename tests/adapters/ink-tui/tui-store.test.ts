@@ -1,12 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import type { ActivityEntry, LogEntry, MacroActivityEntry } from '@adapters/ink-tui/tui-store';
 import { TuiStore } from '@adapters/ink-tui/tui-store';
-import type {
-  ActivityEntry,
-  MacroActivityEntry,
-  LogEntry,
-} from '@adapters/ink-tui/tui-store';
 import type { AppConfig } from '@domain/config';
 import type { MidiDevice } from '@ports/device-discovery.port';
+import { describe, expect, it, vi } from 'vitest';
 
 function makeActivity(cc: number, value = 64, mappedValue = 64): ActivityEntry {
   return { cc, value, mappedValue, timestamp: Date.now() };
@@ -313,7 +309,7 @@ describe('TuiStore', () => {
       store.setSaveStatus('Saved!');
       expect(store.getState().saveStatus).toBe('Saved!');
       // After 2.5 seconds it should clear
-      await new Promise(r => setTimeout(r, 2500));
+      await new Promise((r) => setTimeout(r, 2500));
       expect(store.getState().saveStatus).toBeNull();
     });
   });

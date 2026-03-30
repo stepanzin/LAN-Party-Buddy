@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
 import { Box, Text, useInput } from 'ink';
+import { useContext } from 'react';
 import { StoreContext } from '../context';
 import { useTuiStore } from '../hooks/use-tui-store';
 
@@ -37,18 +37,14 @@ export function LogTab() {
       {entries.map((entry, i) => (
         <Box key={i} gap={1}>
           <Text dimColor>{formatTime(entry.timestamp)}</Text>
-          <Text color={entry.matched ? 'green' : 'yellow'}>
-            CC {entry.cc.toString().padStart(3)}
-          </Text>
+          <Text color={entry.matched ? 'green' : 'yellow'}>CC {entry.cc.toString().padStart(3)}</Text>
           <Text>
             {entry.originalValue.toString().padStart(3)} -&gt; {entry.mappedValue.toString().padStart(3)}
           </Text>
           {entry.ruleLabel && <Text dimColor>({entry.ruleLabel})</Text>}
           {!entry.matched && <Text color="yellow">unmapped</Text>}
           {entry.macroOutputs && entry.macroOutputs.length > 0 && (
-            <Text dimColor>
-              macro: {entry.macroOutputs.map(m => `CC${m.cc}:${m.value}`).join(', ')}
-            </Text>
+            <Text dimColor>macro: {entry.macroOutputs.map((m) => `CC${m.cc}:${m.value}`).join(', ')}</Text>
           )}
         </Box>
       ))}

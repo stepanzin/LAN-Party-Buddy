@@ -5,15 +5,14 @@ export type MidiCC = {
   readonly value: number;
 };
 
-const CC_STATUS_MIN = 0xB0; // 176
-const CC_STATUS_MAX = 0xBF; // 191
+const CC_STATUS_MIN = 0xb0; // 176
+const CC_STATUS_MAX = 0xbf; // 191
 const DATA_MIN = 0;
 const DATA_MAX = 127;
 
 const isInt = (n: number): boolean => Number.isInteger(n);
 
-const inRange = (n: number, min: number, max: number): boolean =>
-  isInt(n) && n >= min && n <= max;
+const inRange = (n: number, min: number, max: number): boolean => isInt(n) && n >= min && n <= max;
 
 /**
  * Parse a raw MIDI message into a `MidiCC` structure.
@@ -24,11 +23,7 @@ export function parseMidiCC(message: readonly number[]): MidiCC | null {
 
   const [status, cc, value] = message;
 
-  if (
-    status === undefined ||
-    cc === undefined ||
-    value === undefined
-  ) return null;
+  if (status === undefined || cc === undefined || value === undefined) return null;
 
   if (!inRange(status, CC_STATUS_MIN, CC_STATUS_MAX)) return null;
   if (!inRange(cc, DATA_MIN, DATA_MAX)) return null;

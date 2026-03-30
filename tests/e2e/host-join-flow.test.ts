@@ -1,24 +1,22 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { EventEmitter } from 'node:events';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { EventEmitter } from 'node:events';
-
-import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
-import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { join } from 'node:path';
 import { JsonStateAdapter } from '@adapters/json-state.adapter';
-import { TcpServer } from '@adapters/network/tcp-server';
-import { TcpClient } from '@adapters/network/tcp-client';
-import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
-import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
 import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
+import type { MidiCC } from '@domain/midi-message';
+import type { MidiDevice } from '@ports/device-discovery.port';
+import type { MidiErrorHandler, MidiInputPort, MidiMessageHandler } from '@ports/midi-input.port';
 import type { MidiOutputPort } from '@ports/midi-output.port';
 import type { UserInterfacePort } from '@ports/user-interface.port';
-import type { MidiDevice } from '@ports/device-discovery.port';
-import type { MidiCC } from '@domain/midi-message';
-import { encodeCC } from '@domain/network-protocol';
 
 // ---------------------------------------------------------------------------
 // Port allocation to avoid conflicts with other test suites
@@ -30,12 +28,15 @@ const nextPort = () => ++PORT;
 // Helpers
 // ---------------------------------------------------------------------------
 
-const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const waitForEvent = (emitter: any, event: string, timeout = 5000) =>
   new Promise<any>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Timeout waiting for ${event}`)), timeout);
-    emitter.once(event, (...args: any[]) => { clearTimeout(timer); resolve(args); });
+    emitter.once(event, (...args: any[]) => {
+      clearTimeout(timer);
+      resolve(args);
+    });
   });
 
 /** Collect messages from a TcpClient until a predicate matches, then return that message. */
@@ -60,11 +61,19 @@ function createMockMidiInput() {
     input: {
       open: mock((_idx: number) => {}),
       close: mock(() => {}),
-      onMessage: mock((h: MidiMessageHandler) => { messageHandler = h; }),
-      onError: mock((h: MidiErrorHandler) => { errorHandler = h; }),
+      onMessage: mock((h: MidiMessageHandler) => {
+        messageHandler = h;
+      }),
+      onError: mock((h: MidiErrorHandler) => {
+        errorHandler = h;
+      }),
     } as MidiInputPort,
-    inject: (msg: MidiCC) => { messageHandler?.(msg); },
-    injectError: (err: Error) => { errorHandler?.(err); },
+    inject: (msg: MidiCC) => {
+      messageHandler?.(msg);
+    },
+    injectError: (err: Error) => {
+      errorHandler?.(err);
+    },
   };
 }
 
@@ -74,7 +83,9 @@ function createMockMidiOutput() {
   return {
     output: {
       openVirtual: mock((_name: string) => {}),
-      send: mock((msg: readonly [number, number, number]) => { sent.push(msg); }),
+      send: mock((msg: readonly [number, number, number]) => {
+        sent.push(msg);
+      }),
       close: mock(() => {}),
     } as MidiOutputPort,
     sent,
@@ -103,8 +114,7 @@ function createMockBrowser(host: string, port: number) {
     destroy: () => {},
   } as any;
   const browser = new MdnsBrowserDiscoveryAdapter(mockBonjour);
-  browser.getServiceByIndex = (idx: number) =>
-    idx === 0 ? { host, port, pin: false } : null;
+  browser.getServiceByIndex = (idx: number) => (idx === 0 ? { host, port, pin: false } : null);
   browser.listDevices = () => [{ index: 0, name: `Test Host (${host}:${port})` }];
   browser.isDeviceConnected = () => true;
   return browser;
@@ -226,12 +236,7 @@ describe('E2E: Host -> Join Network Flow', () => {
    * Build the Join side: TcpClientInputAdapter (real TCP client) -> MidiMapperApp -> mock MIDI output.
    * Returns the mock output to verify captured messages.
    */
-  async function buildJoin(opts: {
-    configYaml: string;
-    hostPort: number;
-    pin?: string;
-    suffix?: string;
-  }) {
+  async function buildJoin(opts: { configYaml: string; hostPort: number; pin?: string; suffix?: string }) {
     const suffix = opts.suffix ?? '';
     const configPath = join(tmpDir, `join-config${suffix}.yaml`);
     await Bun.write(configPath, opts.configYaml);
@@ -293,7 +298,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     // The mapping engine adds NRPN preamble messages + the main CC.
     // On the join side, the TCP input receives { channel: 0, cc: 4, value: 64 }
     // which goes through the join's mapping engine, producing NRPN preamble + CC 4.
-    const cc4Messages = join.mockOutput.sent.filter(m => m[1] === 4);
+    const cc4Messages = join.mockOutput.sent.filter((m) => m[1] === 4);
     expect(cc4Messages.length).toBeGreaterThanOrEqual(1);
     expect(cc4Messages[0]).toEqual([0xb0, 4, 64]);
   });
@@ -325,7 +330,7 @@ describe('E2E: Host -> Join Network Flow', () => {
 
     // The host maps 80 -> ~58, sends that over TCP.
     // The join receives ~58 and passes through linearly.
-    const cc4Messages = join.mockOutput.sent.filter(m => m[1] === 4);
+    const cc4Messages = join.mockOutput.sent.filter((m) => m[1] === 4);
     expect(cc4Messages.length).toBeGreaterThanOrEqual(1);
 
     // The mapped value should NOT be 80 (it was transformed by the host)
@@ -360,7 +365,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     await wait(150);
 
     // Join receives 100, applies invert (0-127 -> 127-0), output = 127 - 100 = 27
-    const cc4Messages = join.mockOutput.sent.filter(m => m[1] === 4);
+    const cc4Messages = join.mockOutput.sent.filter((m) => m[1] === 4);
     expect(cc4Messages.length).toBeGreaterThanOrEqual(1);
     expect(cc4Messages[0]![2]).toBe(27);
   });
@@ -396,8 +401,8 @@ describe('E2E: Host -> Join Network Flow', () => {
     await wait(200);
 
     // Both joins should receive it
-    const cc4Join1 = join1.mockOutput.sent.filter(m => m[1] === 4);
-    const cc4Join2 = join2.mockOutput.sent.filter(m => m[1] === 4);
+    const cc4Join1 = join1.mockOutput.sent.filter((m) => m[1] === 4);
+    const cc4Join2 = join2.mockOutput.sent.filter((m) => m[1] === 4);
 
     expect(cc4Join1.length).toBeGreaterThanOrEqual(1);
     expect(cc4Join2.length).toBeGreaterThanOrEqual(1);
@@ -430,7 +435,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     // Now send a CC from host and verify the client receives it.
     // The host mapping engine produces NRPN preamble (CC 99, CC 100) before CC 4,
     // so we wait for the specific CC 4 message.
-    const msgPromise = waitForMessage(tcpClient, m => m.type === 'cc' && m.cc === 4);
+    const msgPromise = waitForMessage(tcpClient, (m) => m.type === 'cc' && m.cc === 4);
     host.mockInput.inject({ channel: 0, cc: 4, value: 77 });
     const msg = await msgPromise;
     expect(msg).toEqual({ type: 'cc', channel: 0, cc: 4, value: 77 });
@@ -474,7 +479,7 @@ describe('E2E: Host -> Join Network Flow', () => {
 
     // Verify host sends a message and client receives it.
     // Wait for the specific CC 4 message (skipping NRPN preamble).
-    const msg1Promise = waitForMessage(tcpClient, m => m.type === 'cc' && m.cc === 4);
+    const msg1Promise = waitForMessage(tcpClient, (m) => m.type === 'cc' && m.cc === 4);
     host1.mockInput.inject({ channel: 0, cc: 4, value: 10 });
     const msg1 = await msg1Promise;
     expect(msg1).toEqual({ type: 'cc', channel: 0, cc: 4, value: 10 });
@@ -500,7 +505,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     await wait(50);
 
     // Verify new host can send messages
-    const msg2Promise = waitForMessage(tcpClient2, m => m.type === 'cc' && m.cc === 4);
+    const msg2Promise = waitForMessage(tcpClient2, (m) => m.type === 'cc' && m.cc === 4);
     host2.mockInput.inject({ channel: 0, cc: 4, value: 99 });
     const msg2 = await msg2Promise;
     expect(msg2).toEqual({ type: 'cc', channel: 0, cc: 4, value: 99 });
@@ -545,7 +550,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     //
     // On the join side, each received CC goes through the join's mapping engine.
     // So we should see CC 4 messages in the join output.
-    const cc4Messages = join.mockOutput.sent.filter(m => m[1] === 4);
+    const cc4Messages = join.mockOutput.sent.filter((m) => m[1] === 4);
     expect(cc4Messages.length).toBe(MESSAGE_COUNT);
 
     // Verify the values are correct (the NRPN messages also arrive and get processed,

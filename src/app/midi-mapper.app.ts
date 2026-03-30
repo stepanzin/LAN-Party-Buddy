@@ -1,17 +1,17 @@
-import type { MidiInputPort } from '@ports/midi-input.port';
-import type { MidiOutputPort } from '@ports/midi-output.port';
-import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
-import type { UserInterfacePort } from '@ports/user-interface.port';
+import type { AppConfig } from '@domain/config';
+import { type EngineState, INITIAL_ENGINE_STATE, processMidiMessage } from '@domain/mapping-engine';
+import type { CompiledMacros, CompiledRules } from '@domain/mapping-rule';
+import type { MidiCC } from '@domain/midi-message';
+import type { ConfigEditorPort } from '@ports/config-editor.port';
 import type { ConfigReaderPort } from '@ports/config-reader.port';
 import type { ConfigWriterPort } from '@ports/config-writer.port';
-import type { StateStorePort } from '@ports/state-store.port';
+import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
+import type { MidiInputPort } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
 import type { MonitorPort } from '@ports/monitor.port';
-import type { ConfigEditorPort } from '@ports/config-editor.port';
-import type { CompiledRules, CompiledMacros } from '@domain/mapping-rule';
-import type { AppConfig } from '@domain/config';
-import { buildRules, buildMacros } from './rule-compiler';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
-import type { MidiCC } from '@domain/midi-message';
+import type { StateStorePort } from '@ports/state-store.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
+import { buildMacros, buildRules } from './rule-compiler';
 
 const DEFAULT_CONFIG: AppConfig = {
   deviceName: 'MIDI Mapper Output',
@@ -31,7 +31,11 @@ export type MidiMapperDeps = {
 };
 
 export class MidiMapperApp {
-  private configEditorService?: { isMidiLearnActive: boolean; feedMidiLearn(cc: number): boolean; cancelMidiLearn(): void };
+  private configEditorService?: {
+    isMidiLearnActive: boolean;
+    feedMidiLearn(cc: number): boolean;
+    cancelMidiLearn(): void;
+  };
   private currentConfig?: AppConfig;
 
   constructor(
@@ -39,7 +43,11 @@ export class MidiMapperApp {
     private pollIntervalMs = 2000,
   ) {}
 
-  setConfigEditorService(service: { isMidiLearnActive: boolean; feedMidiLearn(cc: number): boolean; cancelMidiLearn(): void }): void {
+  setConfigEditorService(service: {
+    isMidiLearnActive: boolean;
+    feedMidiLearn(cc: number): boolean;
+    cancelMidiLearn(): void;
+  }): void {
     this.configEditorService = service;
   }
 
@@ -79,7 +87,11 @@ export class MidiMapperApp {
 
     // Start UI and enter device loop
     this.deps.ui.start();
-    await this.deviceLoop(currentDeviceName, () => rules, () => macros);
+    await this.deviceLoop(
+      currentDeviceName,
+      () => rules,
+      () => macros,
+    );
   }
 
   private async deviceLoop(
@@ -98,7 +110,7 @@ export class MidiMapperApp {
       let deviceIndex: number | undefined;
 
       if (state.lastDevice) {
-        const match = devices.find(d => d.name === state.lastDevice);
+        const match = devices.find((d) => d.name === state.lastDevice);
         if (match) {
           deviceIndex = match.index;
           this.deps.ui.showInfo(`Auto-connecting to last device: ${state.lastDevice}`);
@@ -111,7 +123,11 @@ export class MidiMapperApp {
         deviceIndex = await this.deps.ui.selectDevice(devices);
       }
 
-      const selectedDevice = devices.find(d => d.index === deviceIndex)!;
+      const selectedDevice = devices.find((d) => d.index === deviceIndex);
+      if (!selectedDevice) {
+        this.deps.ui.showError('Selected device not found.');
+        return;
+      }
 
       this.deps.midiInput.open(deviceIndex);
       this.deps.midiOutput.openVirtual(deviceName);
@@ -138,7 +154,7 @@ export class MidiMapperApp {
         this.deps.ui.logMapping(result.log.cc, result.log.originalValue, result.log.mappedValue);
 
         if (this.deps.monitor) {
-          const matched = (result.log as any).matched ?? (getRules()[msg.cc.toString()] !== undefined);
+          const matched = (result.log as any).matched ?? getRules()[msg.cc.toString()] !== undefined;
           const macroOutputs: ReadonlyArray<{ readonly cc: number; readonly value: number }> =
             (result.log as any).macroOutputs ?? [];
           const ruleLabel = this.findRuleLabel(msg.cc);
@@ -174,7 +190,7 @@ export class MidiMapperApp {
 
   private findRuleLabel(cc: number): string | undefined {
     if (!this.currentConfig) return undefined;
-    const rule = this.currentConfig.rules.find(r => r.cc === cc);
+    const rule = this.currentConfig.rules.find((r) => r.cc === cc);
     return rule?.label;
   }
 

@@ -1,16 +1,16 @@
-import React from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
-import { StoreContext, EditorContext } from './context';
-import type { TuiStore } from './tui-store';
 import type { ConfigEditorPort } from '@ports/config-editor.port';
-import { useTuiStore } from './hooks/use-tui-store';
-import { MonitorTab } from './components/monitor-tab';
-import { EditorTab } from './components/editor-tab';
-import { LogTab } from './components/log-tab';
-import { SettingsTab } from './components/settings-tab';
+import { Box, Text, useApp, useInput } from 'ink';
+import React from 'react';
 import { DeviceSelector } from './components/device-selector';
+import { EditorTab } from './components/editor-tab';
 import { HostStatus } from './components/host-status';
 import { JoinStatus } from './components/join-status';
+import { LogTab } from './components/log-tab';
+import { MonitorTab } from './components/monitor-tab';
+import { SettingsTab } from './components/settings-tab';
+import { EditorContext, StoreContext } from './context';
+import { useTuiStore } from './hooks/use-tui-store';
+import type { TuiStore } from './tui-store';
 
 type Props = {
   store: TuiStore;
@@ -44,9 +44,8 @@ export function App({ store, configEditor }: Props) {
     if (input === '4') store.setTab('settings');
     if (key.tab) {
       const idx = TAB_ORDER.indexOf(state.tab);
-      const next = key.shift
-        ? TAB_ORDER[(idx - 1 + TAB_ORDER.length) % TAB_ORDER.length]!
-        : TAB_ORDER[(idx + 1) % TAB_ORDER.length]!;
+      const nextIdx = key.shift ? (idx - 1 + TAB_ORDER.length) % TAB_ORDER.length : (idx + 1) % TAB_ORDER.length;
+      const next = TAB_ORDER[nextIdx] ?? 'monitor';
       store.setTab(next);
     }
   });
@@ -80,13 +79,13 @@ export function App({ store, configEditor }: Props) {
             <Box>
               <Text bold>MIDI Mapper</Text>
               <Text color="gray"> [{state.mode.toUpperCase()}]</Text>
-              {state.device && (
-                <Text color="gray"> → {state.device}</Text>
-              )}
+              {state.device && <Text color="gray"> → {state.device}</Text>}
               <Text color={state.connected ? 'green' : 'red'}> {state.connected ? '●' : '○'}</Text>
             </Box>
             <Box>
-              <Text color="gray">↑{state.messageCount}msg  {mins}m{secs.toString().padStart(2, '0')}s</Text>
+              <Text color="gray">
+                ↑{state.messageCount}msg {mins}m{secs.toString().padStart(2, '0')}s
+              </Text>
             </Box>
           </Box>
           {state.mode === 'host' && <HostStatus />}
@@ -95,7 +94,12 @@ export function App({ store, configEditor }: Props) {
           {/* Tab bar */}
           <Box gap={2} paddingX={1}>
             {tabs.map((t) => (
-              <Text key={t.key} bold={state.tab === t.key} underline={state.tab === t.key} color={state.tab === t.key ? 'cyan' : 'gray'}>
+              <Text
+                key={t.key}
+                bold={state.tab === t.key}
+                underline={state.tab === t.key}
+                color={state.tab === t.key ? 'cyan' : 'gray'}
+              >
                 [{t.num}] {t.label}
               </Text>
             ))}
@@ -104,7 +108,9 @@ export function App({ store, configEditor }: Props) {
           {/* System message (errors, warnings) */}
           {state.systemMessage && (
             <Box paddingX={1} marginTop={1}>
-              <Text color="red" bold>{state.systemMessage}</Text>
+              <Text color="red" bold>
+                {state.systemMessage}
+              </Text>
             </Box>
           )}
 
@@ -119,9 +125,11 @@ export function App({ store, configEditor }: Props) {
           {/* Footer */}
           <Box paddingX={1} marginTop={1}>
             {quitPending ? (
-              <Text color="red" bold>Press Q again to quit</Text>
+              <Text color="red" bold>
+                Press Q again to quit
+              </Text>
             ) : (
-              <Text color="gray">[1-4/Tab] Switch tabs  [QQ] Quit</Text>
+              <Text color="gray">[1-4/Tab] Switch tabs [QQ] Quit</Text>
             )}
           </Box>
         </Box>

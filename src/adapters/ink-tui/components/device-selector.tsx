@@ -1,13 +1,13 @@
-import React, { useContext } from 'react';
+import type { MidiDevice } from '@ports/device-discovery.port';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
+import { useContext } from 'react';
 import { StoreContext } from '../context';
-import type { MidiDevice } from '@ports/device-discovery.port';
 
 export function DeviceSelector({ devices }: { devices: MidiDevice[] }) {
   const store = useContext(StoreContext);
 
-  const items = devices.map(d => ({
+  const items = devices.map((d) => ({
     label: d.name,
     value: d.index,
   }));

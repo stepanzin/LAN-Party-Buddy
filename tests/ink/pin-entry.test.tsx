@@ -1,17 +1,15 @@
-import React from 'react';
-import { describe, it, expect, mock } from 'bun:test';
-import { render } from 'ink-testing-library';
+import { describe, expect, it, mock } from 'bun:test';
 import { PinEntry } from '@adapters/ink-tui/components/pin-entry';
+import { render } from 'ink-testing-library';
+import React from 'react';
 
-const tick = () => new Promise(r => setTimeout(r, 30));
+const tick = () => new Promise((r) => setTimeout(r, 30));
 
 describe('PinEntry', () => {
   it('renders host name', () => {
     const onSubmit = mock(() => {});
     const onCancel = mock(() => {});
-    const { lastFrame, unmount } = render(
-      React.createElement(PinEntry, { hostName: 'Studio PC', onSubmit, onCancel }),
-    );
+    const { lastFrame, unmount } = render(React.createElement(PinEntry, { hostName: 'Studio PC', onSubmit, onCancel }));
     expect(lastFrame()).toContain('Connect to: Studio PC');
     unmount();
   });
@@ -19,9 +17,7 @@ describe('PinEntry', () => {
   it('shows empty placeholders initially', () => {
     const onSubmit = mock(() => {});
     const onCancel = mock(() => {});
-    const { lastFrame, unmount } = render(
-      React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }),
-    );
+    const { lastFrame, unmount } = render(React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }));
     expect(lastFrame()).toContain('_ _ _ _');
     unmount();
   });
@@ -67,9 +63,7 @@ describe('PinEntry', () => {
   it('Enter submits when 4 digits entered', async () => {
     const onSubmit = mock(() => {});
     const onCancel = mock(() => {});
-    const { stdin, unmount } = render(
-      React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }),
-    );
+    const { stdin, unmount } = render(React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }));
 
     stdin.write('1');
     await tick();
@@ -89,9 +83,7 @@ describe('PinEntry', () => {
   it('Enter does NOT submit with < 4 digits', async () => {
     const onSubmit = mock(() => {});
     const onCancel = mock(() => {});
-    const { stdin, unmount } = render(
-      React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }),
-    );
+    const { stdin, unmount } = render(React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }));
 
     stdin.write('1');
     await tick();
@@ -129,9 +121,7 @@ describe('PinEntry', () => {
   it('Esc calls onCancel', async () => {
     const onSubmit = mock(() => {});
     const onCancel = mock(() => {});
-    const { stdin, unmount } = render(
-      React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }),
-    );
+    const { stdin, unmount } = render(React.createElement(PinEntry, { hostName: 'Host', onSubmit, onCancel }));
 
     stdin.write('\x1b');
     await tick();

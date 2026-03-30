@@ -1,6 +1,6 @@
+import type { AppConfig, MacroConfig, RuleConfig } from '@domain/config';
 import type { ConfigEditorPort } from '@ports/config-editor.port';
 import type { ConfigWriterPort } from '@ports/config-writer.port';
-import type { AppConfig, RuleConfig, MacroConfig } from '@domain/config';
 
 export class ConfigEditorService implements ConfigEditorPort {
   private config: AppConfig;
@@ -18,7 +18,9 @@ export class ConfigEditorService implements ConfigEditorPort {
     this.configWriter = configWriter;
   }
 
-  getConfig(): AppConfig { return this.config; }
+  getConfig(): AppConfig {
+    return this.config;
+  }
 
   startMidiLearn(): Promise<number> {
     this.cancelMidiLearn(); // cancel any existing

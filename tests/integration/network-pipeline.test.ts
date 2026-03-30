@@ -1,14 +1,14 @@
-import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '@adapters/network/tcp-server';
-import { TcpClient } from '@adapters/network/tcp-client';
-import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
-import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
-import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
-import { processMidiMessage, INITIAL_ENGINE_STATE } from '@domain/mapping-engine';
-import { buildRules } from '@app/rule-compiler';
-import type { MidiCC } from '@domain/midi-message';
-import type { AppConfig } from '@domain/config';
+import { describe, expect, it } from 'bun:test';
 import { EventEmitter } from 'node:events';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { buildRules } from '@app/rule-compiler';
+import type { AppConfig } from '@domain/config';
+import { INITIAL_ENGINE_STATE, processMidiMessage } from '@domain/mapping-engine';
+import type { MidiCC } from '@domain/midi-message';
 
 // Use ports from 19400
 let PORT = 19400;
@@ -17,14 +17,13 @@ const nextPort = () => ++PORT;
 function createMockBrowser(host: string, port: number) {
   const mockBonjour = { find: () => new EventEmitter(), destroy: () => {} } as any;
   const browser = new MdnsBrowserDiscoveryAdapter(mockBonjour);
-  browser.getServiceByIndex = (idx: number) => idx === 0 ? { host, port, pin: false } : null;
+  browser.getServiceByIndex = (idx: number) => (idx === 0 ? { host, port, pin: false } : null);
   browser.listDevices = () => [{ index: 0, name: `Host (${host}:${port})` }];
   browser.isDeviceConnected = () => true;
   return browser;
 }
 
 describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () => {
-
   it('CC message flows through: encode → TCP → decode → MidiCC', async () => {
     const p = nextPort();
     const server = new TcpServer();
@@ -38,11 +37,11 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
     const received: MidiCC[] = [];
     input.onMessage((msg) => received.push(msg));
     input.open(0);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
     // Send as raw MIDI: status=0xB2 (channel 2), CC 10, value 64
-    output.send([0xB2, 10, 64]);
-    await new Promise(r => setTimeout(r, 100));
+    output.send([0xb2, 10, 64]);
+    await new Promise((r) => setTimeout(r, 100));
 
     expect(received.length).toBe(1);
     expect(received[0]).toEqual({ channel: 2, cc: 10, value: 64 });
@@ -64,12 +63,17 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
 
     const config: AppConfig = {
       deviceName: 'Test',
-      rules: [{
-        cc: 10, label: 'Test Rule',
-        inputMin: 0, inputMax: 127,
-        outputMin: 0, outputMax: 64,
-        curve: 'linear',
-      }],
+      rules: [
+        {
+          cc: 10,
+          label: 'Test Rule',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 64,
+          curve: 'linear',
+        },
+      ],
     };
     const rules = buildRules(config);
 
@@ -80,11 +84,11 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
     });
 
     networkInput.open(0);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
     // Send CC 10, value 127 → should map to 64 (linear 0-127 → 0-64)
-    networkOutput.send([0xB0, 10, 127]);
-    await new Promise(r => setTimeout(r, 100));
+    networkOutput.send([0xb0, 10, 127]);
+    await new Promise((r) => setTimeout(r, 100));
 
     expect(mapped.length).toBe(1);
     expect(mapped[0]).toBe(64);
@@ -105,12 +109,18 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
 
     const config: AppConfig = {
       deviceName: 'Test',
-      rules: [{
-        cc: 11, label: 'Smoothed',
-        inputMin: 0, inputMax: 127,
-        outputMin: 0, outputMax: 127,
-        curve: 'linear', smoothing: 3,
-      }],
+      rules: [
+        {
+          cc: 11,
+          label: 'Smoothed',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear',
+          smoothing: 3,
+        },
+      ],
     };
     const rules = buildRules(config);
 
@@ -124,13 +134,13 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
     });
 
     networkInput.open(0);
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise((r) => setTimeout(r, 100));
 
     // Send 3 values for smoothing
-    networkOutput.send([0xB0, 11, 60]);
-    networkOutput.send([0xB0, 11, 90]);
-    networkOutput.send([0xB0, 11, 120]);
-    await new Promise(r => setTimeout(r, 200));
+    networkOutput.send([0xb0, 11, 60]);
+    networkOutput.send([0xb0, 11, 90]);
+    networkOutput.send([0xb0, 11, 120]);
+    await new Promise((r) => setTimeout(r, 200));
 
     expect(mapped.length).toBe(3);
     // Smoothing window 3: avg(60)=60, avg(60,90)=75, avg(60,90,120)=90

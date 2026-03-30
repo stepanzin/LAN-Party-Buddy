@@ -1,12 +1,12 @@
-import React from 'react';
-import { render } from 'ink';
-import type { UserInterfacePort, WelcomeChoice } from '@ports/user-interface.port';
-import type { MonitorPort } from '@ports/monitor.port';
-import type { MidiDevice } from '@ports/device-discovery.port';
 import type { ConfigEditorPort } from '@ports/config-editor.port';
-import { TuiStore } from './tui-store';
+import type { MidiDevice } from '@ports/device-discovery.port';
+import type { MonitorPort } from '@ports/monitor.port';
+import type { UserInterfacePort, WelcomeChoice } from '@ports/user-interface.port';
+import { render } from 'ink';
+import React from 'react';
 import { App } from './app';
 import { WelcomeScreen } from './components/welcome-screen';
+import type { TuiStore } from './tui-store';
 
 export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
   private unmount?: () => void;
@@ -57,7 +57,10 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
 
   onMidiActivity(cc: number, value: number, mappedValue: number, ruleLabel?: string): void {
     this.store.pushActivity({
-      cc, value, mappedValue, ruleLabel,
+      cc,
+      value,
+      mappedValue,
+      ruleLabel,
       timestamp: Date.now(),
     });
     this.store.pushLog({
@@ -72,7 +75,8 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
 
   onMacroActivity(inputCc: number, outputs: Array<{ cc: number; value: number }>): void {
     this.store.pushMacroActivity({
-      inputCc, outputs,
+      inputCc,
+      outputs,
       timestamp: Date.now(),
     });
   }
@@ -100,10 +104,7 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
 
   async selectDevice(devices: MidiDevice[]): Promise<number> {
     return new Promise<number>((resolve) => {
-      this.store.setDeviceSelection(
-        devices,
-        (index: number) => resolve(index),
-      );
+      this.store.setDeviceSelection(devices, (index: number) => resolve(index));
     });
   }
 

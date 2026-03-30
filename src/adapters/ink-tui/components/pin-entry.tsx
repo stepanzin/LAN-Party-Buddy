@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
+import { useState } from 'react';
 
 type Props = {
   hostName: string;
@@ -11,11 +11,20 @@ export function PinEntry({ hostName, onSubmit, onCancel }: Props) {
   const [digits, setDigits] = useState('');
 
   useInput((input, key) => {
-    if (key.escape) { onCancel(); return; }
-    if (key.return && digits.length === 4) { onSubmit(digits); return; }
-    if (key.backspace || key.delete) { setDigits(d => d.slice(0, -1)); return; }
+    if (key.escape) {
+      onCancel();
+      return;
+    }
+    if (key.return && digits.length === 4) {
+      onSubmit(digits);
+      return;
+    }
+    if (key.backspace || key.delete) {
+      setDigits((d) => d.slice(0, -1));
+      return;
+    }
     if (input >= '0' && input <= '9' && digits.length < 4) {
-      setDigits(d => d + input);
+      setDigits((d) => d + input);
     }
   });
 
@@ -29,7 +38,7 @@ export function PinEntry({ hostName, onSubmit, onCancel }: Props) {
         </Text>
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>[0-9] Enter digits  [Enter] Connect  [Esc] Cancel</Text>
+        <Text dimColor>[0-9] Enter digits [Enter] Connect [Esc] Cancel</Text>
       </Box>
     </Box>
   );

@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-
-import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
-import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { join } from 'node:path';
 import { JsonStateAdapter } from '@adapters/json-state.adapter';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
-import type { MidiOutputPort } from '@ports/midi-output.port';
+import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
 import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import type { MidiErrorHandler, MidiInputPort, MidiMessageHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
 import type { UserInterfacePort } from '@ports/user-interface.port';
 
 // ---------------------------------------------------------------------------
@@ -26,8 +25,12 @@ function createMockMidiInput() {
   const input: MidiInputPort = {
     open: mock((_idx: number) => {}),
     close: mock(() => {}),
-    onMessage: mock((handler: MidiMessageHandler) => { messageHandler = handler; }),
-    onError: mock((handler: MidiErrorHandler) => { errorHandler = handler; }),
+    onMessage: mock((handler: MidiMessageHandler) => {
+      messageHandler = handler;
+    }),
+    onError: mock((handler: MidiErrorHandler) => {
+      errorHandler = handler;
+    }),
   };
   return {
     input,
@@ -52,10 +55,7 @@ function createMockMidiOutput() {
   return { port, sentMessages };
 }
 
-function createMockDeviceDiscovery(
-  devicesSequence: MidiDevice[][],
-  connectionChecks: boolean[],
-): DeviceDiscoveryPort {
+function createMockDeviceDiscovery(devicesSequence: MidiDevice[][], connectionChecks: boolean[]): DeviceDiscoveryPort {
   let listCallCount = 0;
   let connCheckCount = 0;
   return {
@@ -81,9 +81,15 @@ function createMockUI(selectedDeviceIndex = 0) {
     waitForExit: mock(() => Promise.resolve()),
     showWelcome: mock(() => Promise.resolve('local' as const)),
     selectDevice: mock((_devices: MidiDevice[]) => Promise.resolve(selectedDeviceIndex)),
-    showInfo: mock((msg: string) => { messages.push(`[INFO] ${msg}`); }),
-    showWarning: mock((msg: string) => { messages.push(`[WARN] ${msg}`); }),
-    showError: mock((msg: string) => { messages.push(`[ERROR] ${msg}`); }),
+    showInfo: mock((msg: string) => {
+      messages.push(`[INFO] ${msg}`);
+    }),
+    showWarning: mock((msg: string) => {
+      messages.push(`[WARN] ${msg}`);
+    }),
+    showError: mock((msg: string) => {
+      messages.push(`[ERROR] ${msg}`);
+    }),
     logMapping: mock((cc: number, orig: number, mapped: number) => {
       mappingLogs.push({ cc, original: orig, mapped });
     }),
@@ -204,7 +210,7 @@ describe('E2E: Full Application Flow', () => {
 
     // Verify CC4 value=64 mapped linearly: output should be 64
     // Each message produces: [0xb0, 99, 127], [0xb0, 100, 0], [0xb0, 4, mappedValue]
-    const cc4Outputs = mockOutput.sentMessages.filter(m => m[1] === 4);
+    const cc4Outputs = mockOutput.sentMessages.filter((m) => m[1] === 4);
     expect(cc4Outputs[0]).toEqual([0xb0, 4, 64]);
     expect(cc4Outputs[1]).toEqual([0xb0, 4, 127]);
 
@@ -216,9 +222,7 @@ describe('E2E: Full Application Flow', () => {
     expect(savedState.lastDevice).toBe('Controller A');
 
     // Verify second iteration showed no-devices error
-    expect(ui.port.showError).toHaveBeenCalledWith(
-      'No MIDI input devices found. Connect a device and try again.',
-    );
+    expect(ui.port.showError).toHaveBeenCalledWith('No MIDI input devices found. Connect a device and try again.');
   });
 
   // -----------------------------------------------------------------------
@@ -229,7 +233,7 @@ describe('E2E: Full Application Flow', () => {
     // Run 1: no saved state, select Controller B (index 1), disconnect immediately
     const run1 = buildApp({
       devicesSequence: [DEVICES, []], // first: devices, second: empty -> exit
-      connectionChecks: [false],      // immediate disconnect
+      connectionChecks: [false], // immediate disconnect
       selectedDeviceIndex: 1,
       statePath,
     });
@@ -246,7 +250,7 @@ describe('E2E: Full Application Flow', () => {
     // Run 2: state has lastDevice = "Controller B", should auto-connect
     const run2 = buildApp({
       devicesSequence: [DEVICES, []], // first: devices, second: empty -> exit
-      connectionChecks: [false],      // immediate disconnect
+      connectionChecks: [false], // immediate disconnect
       statePath,
     });
 
@@ -276,14 +280,14 @@ describe('E2E: Full Application Flow', () => {
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 127 });
 
     // Extract CC4 output values
-    const cc4Outputs = mockOutput.sentMessages.filter(m => m[1] === 4);
+    const cc4Outputs = mockOutput.sentMessages.filter((m) => m[1] === 4);
     expect(cc4Outputs).toHaveLength(3);
     expect(cc4Outputs[0]).toEqual([0xb0, 4, 0]);
     expect(cc4Outputs[1]).toEqual([0xb0, 4, 64]);
     expect(cc4Outputs[2]).toEqual([0xb0, 4, 127]);
 
     // Verify UI logged each mapping
-    const cc4Logs = ui.mappingLogs.filter(l => l.cc === 4);
+    const cc4Logs = ui.mappingLogs.filter((l) => l.cc === 4);
     expect(cc4Logs).toEqual([
       { cc: 4, original: 0, mapped: 0 },
       { cc: 4, original: 64, mapped: 64 },
@@ -308,14 +312,14 @@ describe('E2E: Full Application Flow', () => {
     // Press CC 64, value 127 -> toggle OFF -> output 0
     mockInput.simulateMessage({ channel: 0, cc: 64, value: 127 });
 
-    const cc64Outputs = mockOutput.sentMessages.filter(m => m[1] === 64);
+    const cc64Outputs = mockOutput.sentMessages.filter((m) => m[1] === 64);
     expect(cc64Outputs).toHaveLength(3);
     expect(cc64Outputs[0]).toEqual([0xb0, 64, 127]); // toggle ON
     expect(cc64Outputs[1]).toEqual([0xb0, 64, 127]); // release: stays ON
-    expect(cc64Outputs[2]).toEqual([0xb0, 64, 0]);   // toggle OFF
+    expect(cc64Outputs[2]).toEqual([0xb0, 64, 0]); // toggle OFF
 
     // Verify UI logs
-    const cc64Logs = ui.mappingLogs.filter(l => l.cc === 64);
+    const cc64Logs = ui.mappingLogs.filter((l) => l.cc === 64);
     expect(cc64Logs[0]!.mapped).toBe(127);
     expect(cc64Logs[1]!.mapped).toBe(127);
     expect(cc64Logs[2]!.mapped).toBe(0);
@@ -340,7 +344,7 @@ describe('E2E: Full Application Flow', () => {
     mockInput.simulateMessage({ channel: 0, cc: 11, value: 90 });
     mockInput.simulateMessage({ channel: 0, cc: 11, value: 120 });
 
-    const cc11Outputs = mockOutput.sentMessages.filter(m => m[1] === 11);
+    const cc11Outputs = mockOutput.sentMessages.filter((m) => m[1] === 11);
     expect(cc11Outputs).toHaveLength(3);
 
     // First message: avg([60]) = 60
@@ -351,7 +355,7 @@ describe('E2E: Full Application Flow', () => {
     expect(cc11Outputs[2]).toEqual([0xb0, 11, 90]);
 
     // Verify the final UI log entry shows avg=90
-    const cc11Logs = ui.mappingLogs.filter(l => l.cc === 11);
+    const cc11Logs = ui.mappingLogs.filter((l) => l.cc === 11);
     expect(cc11Logs[2]!.mapped).toBe(90);
   });
 
@@ -371,12 +375,12 @@ describe('E2E: Full Application Flow', () => {
     mockInput.simulateMessage({ channel: 0, cc: 1, value: 100 });
 
     // Main CC 1 output
-    const cc1Outputs = mockOutput.sentMessages.filter(m => m[1] === 1);
+    const cc1Outputs = mockOutput.sentMessages.filter((m) => m[1] === 1);
     expect(cc1Outputs.length).toBeGreaterThanOrEqual(1);
     expect(cc1Outputs[0]).toEqual([0xb0, 1, 100]);
 
     // Macro CC 74 output
-    const cc74Outputs = mockOutput.sentMessages.filter(m => m[1] === 74);
+    const cc74Outputs = mockOutput.sentMessages.filter((m) => m[1] === 74);
     expect(cc74Outputs).toHaveLength(1);
     expect(cc74Outputs[0]).toEqual([0xb0, 74, 100]);
   });
@@ -405,12 +409,12 @@ describe('E2E: Full Application Flow', () => {
     await app.run(configPath, true);
 
     // Mix of different CCs
-    mockInput.simulateMessage({ channel: 0, cc: 4, value: 50 });   // expression
+    mockInput.simulateMessage({ channel: 0, cc: 4, value: 50 }); // expression
     mockInput.simulateMessage({ channel: 0, cc: 64, value: 127 }); // toggle on
     mockInput.simulateMessage({ channel: 0, cc: 11, value: 100 }); // smoothed
-    mockInput.simulateMessage({ channel: 0, cc: 4, value: 100 });  // expression again
-    mockInput.simulateMessage({ channel: 0, cc: 64, value: 0 });   // toggle release (stays on)
-    mockInput.simulateMessage({ channel: 0, cc: 11, value: 50 });  // smoothed (avg of [100,50]=75)
+    mockInput.simulateMessage({ channel: 0, cc: 4, value: 100 }); // expression again
+    mockInput.simulateMessage({ channel: 0, cc: 64, value: 0 }); // toggle release (stays on)
+    mockInput.simulateMessage({ channel: 0, cc: 11, value: 50 }); // smoothed (avg of [100,50]=75)
 
     expect(ui.mappingLogs).toHaveLength(6);
 
@@ -424,7 +428,7 @@ describe('E2E: Full Application Flow', () => {
 
     // Smoothed: window grows
     expect(ui.mappingLogs[2]).toEqual({ cc: 11, original: 100, mapped: 100 }); // avg([100])=100
-    expect(ui.mappingLogs[5]).toEqual({ cc: 11, original: 50, mapped: 75 });   // avg([100,50])=75
+    expect(ui.mappingLogs[5]).toEqual({ cc: 11, original: 50, mapped: 75 }); // avg([100,50])=75
   });
 
   // -----------------------------------------------------------------------
@@ -461,7 +465,7 @@ describe('E2E: Full Application Flow', () => {
     mockInput.simulateMessage({ channel: 0, cc: 80, value: 42 });
 
     // Should still produce output: NRPN preamble + passthrough
-    const cc80Outputs = mockOutput.sentMessages.filter(m => m[1] === 80);
+    const cc80Outputs = mockOutput.sentMessages.filter((m) => m[1] === 80);
     expect(cc80Outputs.length).toBeGreaterThanOrEqual(1);
     // Value passes through unchanged
     expect(cc80Outputs[0]).toEqual([0xb0, 80, 42]);

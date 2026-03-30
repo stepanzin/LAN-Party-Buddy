@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach, afterEach } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 
 // ---------------------------------------------------------------------------
 // Edge: Duplicate virtual MIDI port names
@@ -20,8 +20,12 @@ function createMockMidi(outputPortNames: string[] = [], inputPortNames: string[]
       constructor() {
         this.portNames = [...outputPortNames];
       }
-      getPortCount() { return this.portNames.length; }
-      getPortName(i: number) { return this.portNames[i] ?? ''; }
+      getPortCount() {
+        return this.portNames.length;
+      }
+      getPortName(i: number) {
+        return this.portNames[i] ?? '';
+      }
       openVirtualPort(name: string) {
         // Real @julusian/midi allows duplicates silently
         outputPortNames.push(name);
@@ -34,14 +38,18 @@ function createMockMidi(outputPortNames: string[] = [], inputPortNames: string[]
       constructor() {
         this.portNames = [...inputPortNames];
       }
-      getPortCount() { return this.portNames.length; }
-      getPortName(i: number) { return this.portNames[i] ?? ''; }
+      getPortCount() {
+        return this.portNames.length;
+      }
+      getPortName(i: number) {
+        return this.portNames[i] ?? '';
+      }
       openVirtualPort(name: string) {
         inputPortNames.push(name);
       }
       openPort(_i: number) {}
       closePort() {}
-      on(_event: string, _handler: Function) {}
+      on(_event: string, _handler: (...args: any[]) => void) {}
     },
   };
 }
@@ -108,7 +116,7 @@ describe('Edge: Duplicate virtual MIDI port names', () => {
     output2.openVirtualPort('Duplicate Port');
 
     // Two ports with the same name now exist
-    expect(sharedOutputNames.filter(n => n === 'Duplicate Port').length).toBe(2);
+    expect(sharedOutputNames.filter((n) => n === 'Duplicate Port').length).toBe(2);
   });
 
   it('duplicate detection sees port opened by first instance', () => {

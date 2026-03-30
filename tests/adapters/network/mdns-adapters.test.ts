@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 import { EventEmitter } from 'node:events';
 import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
 import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';

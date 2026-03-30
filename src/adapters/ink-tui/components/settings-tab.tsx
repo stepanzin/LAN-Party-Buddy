@@ -1,7 +1,7 @@
-import React, { useContext, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import { StoreContext, EditorContext } from '../context';
+import { useContext, useState } from 'react';
+import { EditorContext, StoreContext } from '../context';
 import { useTuiStore } from '../hooks/use-tui-store';
 
 export function SettingsTab() {
@@ -30,11 +30,14 @@ export function SettingsTab() {
     }
 
     if (input === 's' && editor) {
-      editor.saveConfig('config.yaml').then(() => {
-        store.setSaveStatus('Config saved \u2713');
-      }).catch((err: Error) => {
-        store.setSaveStatus(`Save failed: ${err.message}`);
-      });
+      editor
+        .saveConfig('config.yaml')
+        .then(() => {
+          store.setSaveStatus('Config saved \u2713');
+        })
+        .catch((err: Error) => {
+          store.setSaveStatus(`Save failed: ${err.message}`);
+        });
     }
   });
 
@@ -60,11 +63,7 @@ export function SettingsTab() {
         )}
 
         <Box marginTop={1}>
-          <Text dimColor>
-            {editing
-              ? '[Enter] Apply  [Esc] Cancel'
-              : '[Enter] Edit  [S] Save config'}
-          </Text>
+          <Text dimColor>{editing ? '[Enter] Apply  [Esc] Cancel' : '[Enter] Edit  [S] Save config'}</Text>
         </Box>
 
         <Box marginTop={1}>
@@ -81,15 +80,26 @@ export function SettingsTab() {
       {state.mode === 'host' && (
         <Box marginTop={1} flexDirection="column">
           <Text bold>Network</Text>
-          <Text>Port:      <Text color="cyan">{state.hostPort ?? 9900}</Text></Text>
-          <Text>Access:    <Text color="cyan">{state.hostAccessMode === 'pin' ? `PIN: ${state.hostPin}` : 'Open'}</Text></Text>
+          <Text>
+            Port: <Text color="cyan">{state.hostPort ?? 9900}</Text>
+          </Text>
+          <Text>
+            Access: <Text color="cyan">{state.hostAccessMode === 'pin' ? `PIN: ${state.hostPin}` : 'Open'}</Text>
+          </Text>
         </Box>
       )}
       {state.mode === 'join' && state.connectedHost && (
         <Box marginTop={1} flexDirection="column">
           <Text bold>Network</Text>
-          <Text>Host:      <Text color="cyan">{state.connectedHost.name}</Text></Text>
-          <Text>Address:   <Text color="cyan">{state.connectedHost.address}:{state.connectedHost.port}</Text></Text>
+          <Text>
+            Host: <Text color="cyan">{state.connectedHost.name}</Text>
+          </Text>
+          <Text>
+            Address:{' '}
+            <Text color="cyan">
+              {state.connectedHost.address}:{state.connectedHost.port}
+            </Text>
+          </Text>
         </Box>
       )}
     </Box>

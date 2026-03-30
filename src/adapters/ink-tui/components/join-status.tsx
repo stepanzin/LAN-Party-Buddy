@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
 import { Box, Text } from 'ink';
+import { useContext } from 'react';
 import { StoreContext } from '../context';
 import { useTuiStore } from '../hooks/use-tui-store';
 
@@ -13,8 +13,12 @@ export function JoinStatus() {
 
   return (
     <Box gap={2}>
-      <Text>Host: <Text color="cyan">{state.connectedHost.name}</Text></Text>
-      <Text dimColor>({state.connectedHost.address}:{state.connectedHost.port})</Text>
+      <Text>
+        Host: <Text color="cyan">{state.connectedHost.name}</Text>
+      </Text>
+      <Text dimColor>
+        ({state.connectedHost.address}:{state.connectedHost.port})
+      </Text>
     </Box>
   );
 }

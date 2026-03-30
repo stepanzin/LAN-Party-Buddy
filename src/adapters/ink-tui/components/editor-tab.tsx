@@ -1,24 +1,35 @@
-import React, { useContext, useState, useCallback } from 'react';
+import type { Curve, Mode } from '@domain/config';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import { StoreContext, EditorContext } from '../context';
+import { useCallback, useContext, useState } from 'react';
+import { EditorContext, StoreContext } from '../context';
 import { useTuiStore } from '../hooks/use-tui-store';
-import type { Curve, Mode } from '@domain/config';
 
 const CURVES: Curve[] = ['linear', 'logarithmic', 'exponential', 's-curve'];
 const MODES: Mode[] = ['normal', 'toggle'];
 
 const CURVE_PREVIEW: Record<Curve, string> = {
-  'linear': '╱',
-  'logarithmic': '╱‾',
-  'exponential': '_╱',
+  linear: '╱',
+  logarithmic: '╱‾',
+  exponential: '_╱',
   's-curve': '_⌐',
 };
 
 type EditorMode = 'view' | 'edit' | 'edit-field';
 
-const FIELDS = ['cc', 'label', 'inputMin', 'inputMax', 'outputMin', 'outputMax', 'curve', 'smoothing', 'invert', 'mode'] as const;
-type FieldName = typeof FIELDS[number];
+const FIELDS = [
+  'cc',
+  'label',
+  'inputMin',
+  'inputMax',
+  'outputMin',
+  'outputMax',
+  'curve',
+  'smoothing',
+  'invert',
+  'mode',
+] as const;
+type FieldName = (typeof FIELDS)[number];
 
 export function EditorTab() {
   const store = useContext(StoreContext);
@@ -35,7 +46,7 @@ export function EditorTab() {
   const selectedMacroIndex = state.selectedMacroIndex;
   const macros = config?.macros ?? [];
 
-  const currentField = FIELDS[focusedField]!;
+  const currentField = FIELDS[focusedField] ?? 'cc';
 
   const applyFieldEdit = useCallback(() => {
     if (!selectedRule || !editor || !editingField) return;
@@ -47,7 +58,8 @@ export function EditorTab() {
         if (val.length > 0) editor.updateRule(selectedIndex, { ...selectedRule, label: val });
         break;
       case 'cc':
-        if (Number.isInteger(num) && num >= 0 && num <= 127) editor.updateRule(selectedIndex, { ...selectedRule, cc: num });
+        if (Number.isInteger(num) && num >= 0 && num <= 127)
+          editor.updateRule(selectedIndex, { ...selectedRule, cc: num });
         break;
       case 'inputMin':
         if (Number.isFinite(num)) editor.updateRule(selectedIndex, { ...selectedRule, inputMin: num });
@@ -70,16 +82,26 @@ export function EditorTab() {
   const getFieldValue = (field: FieldName): string => {
     if (!selectedRule) return '';
     switch (field) {
-      case 'cc': return String(selectedRule.cc);
-      case 'label': return selectedRule.label;
-      case 'inputMin': return String(selectedRule.inputMin);
-      case 'inputMax': return String(selectedRule.inputMax);
-      case 'outputMin': return String(selectedRule.outputMin);
-      case 'outputMax': return String(selectedRule.outputMax);
-      case 'curve': return selectedRule.curve;
-      case 'smoothing': return String(selectedRule.smoothing ?? 0);
-      case 'invert': return selectedRule.invert ? 'Yes' : 'No';
-      case 'mode': return selectedRule.mode ?? 'normal';
+      case 'cc':
+        return String(selectedRule.cc);
+      case 'label':
+        return selectedRule.label;
+      case 'inputMin':
+        return String(selectedRule.inputMin);
+      case 'inputMax':
+        return String(selectedRule.inputMax);
+      case 'outputMin':
+        return String(selectedRule.outputMin);
+      case 'outputMax':
+        return String(selectedRule.outputMax);
+      case 'curve':
+        return selectedRule.curve;
+      case 'smoothing':
+        return String(selectedRule.smoothing ?? 0);
+      case 'invert':
+        return selectedRule.invert ? 'Yes' : 'No';
+      case 'mode':
+        return selectedRule.mode ?? 'normal';
     }
   };
 
@@ -118,8 +140,13 @@ export function EditorTab() {
       }
       if (input === 'a' && editor) {
         editor.addRule({
-          cc: 0, label: 'New Rule', inputMin: 0, inputMax: 127,
-          outputMin: 0, outputMax: 127, curve: 'linear',
+          cc: 0,
+          label: 'New Rule',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear',
         });
         store.setSelectedRuleIndex(config ? config.rules.length : 0);
         setMode('edit');
@@ -127,7 +154,8 @@ export function EditorTab() {
       }
       if (input === 'n' && editor) {
         editor.addMacro({
-          input: 0, label: 'New Macro',
+          input: 0,
+          label: 'New Macro',
           outputs: [{ cc: 0, label: 'Output', outputMin: 0, outputMax: 127, curve: 'linear' }],
         });
         store.setSelectedMacroIndex(macros.length);
@@ -159,24 +187,32 @@ export function EditorTab() {
     // Field-specific actions
     if (currentField === 'cc' && input === 'l' && editor) {
       store.setMidiLearnActive(true);
-      editor.startMidiLearn().then((cc) => {
-        store.setMidiLearnCaptured(cc);
-        if (selectedRule) editor.updateRule(selectedIndex, { ...selectedRule, cc });
-      }).catch(() => {
-        store.setMidiLearnActive(false);
-      });
+      editor
+        .startMidiLearn()
+        .then((cc) => {
+          store.setMidiLearnCaptured(cc);
+          if (selectedRule) editor.updateRule(selectedIndex, { ...selectedRule, cc });
+        })
+        .catch(() => {
+          store.setMidiLearnActive(false);
+        });
       return;
     }
 
     if (currentField === 'curve' && selectedRule && editor) {
       if (key.leftArrow) {
         const idx = CURVES.indexOf(selectedRule.curve);
-        editor.updateRule(selectedIndex, { ...selectedRule, curve: CURVES[(idx - 1 + CURVES.length) % CURVES.length]! });
+        const prevCurve = CURVES[(idx - 1 + CURVES.length) % CURVES.length] ?? 'linear';
+        editor.updateRule(selectedIndex, {
+          ...selectedRule,
+          curve: prevCurve,
+        });
         return;
       }
       if (key.rightArrow) {
         const idx = CURVES.indexOf(selectedRule.curve);
-        editor.updateRule(selectedIndex, { ...selectedRule, curve: CURVES[(idx + 1) % CURVES.length]! });
+        const nextCurve = CURVES[(idx + 1) % CURVES.length] ?? 'linear';
+        editor.updateRule(selectedIndex, { ...selectedRule, curve: nextCurve });
         return;
       }
     }
@@ -191,7 +227,8 @@ export function EditorTab() {
     if (currentField === 'mode' && selectedRule && editor) {
       if (key.return || key.leftArrow || key.rightArrow) {
         const idx = MODES.indexOf(selectedRule.mode ?? 'normal');
-        editor.updateRule(selectedIndex, { ...selectedRule, mode: MODES[(idx + 1) % MODES.length]! });
+        const nextMode = MODES[(idx + 1) % MODES.length] ?? 'normal';
+        editor.updateRule(selectedIndex, { ...selectedRule, mode: nextMode });
         return;
       }
     }
@@ -209,11 +246,14 @@ export function EditorTab() {
 
     // Global edit-mode shortcuts
     if (input === 's' && editor) {
-      editor.saveConfig('config.yaml').then(() => {
-        store.setSaveStatus('Config saved ✓');
-      }).catch((err: Error) => {
-        store.setSaveStatus(`Save failed: ${err.message}`);
-      });
+      editor
+        .saveConfig('config.yaml')
+        .then(() => {
+          store.setSaveStatus('Config saved ✓');
+        })
+        .catch((err: Error) => {
+          store.setSaveStatus(`Save failed: ${err.message}`);
+        });
     }
     if (input === 'd' && editor && config && config.rules.length > 0) {
       editor.deleteRule(selectedIndex);
@@ -221,14 +261,20 @@ export function EditorTab() {
     }
     if (input === 'a' && editor) {
       editor.addRule({
-        cc: 0, label: 'New Rule', inputMin: 0, inputMax: 127,
-        outputMin: 0, outputMax: 127, curve: 'linear',
+        cc: 0,
+        label: 'New Rule',
+        inputMin: 0,
+        inputMax: 127,
+        outputMin: 0,
+        outputMax: 127,
+        curve: 'linear',
       });
       store.setSelectedRuleIndex(config ? config.rules.length : 0);
     }
     if (input === 'n' && editor) {
       editor.addMacro({
-        input: 0, label: 'New Macro',
+        input: 0,
+        label: 'New Macro',
         outputs: [{ cc: 0, label: 'Output', outputMin: 0, outputMax: 127, curve: 'linear' }],
       });
       store.setSelectedMacroIndex(macros.length);
@@ -252,7 +298,10 @@ export function EditorTab() {
     if (mode === 'edit-field' && editingField === field) {
       return (
         <Box>
-          <Text color="cyan">{prefix}{label.padEnd(11)}</Text>
+          <Text color="cyan">
+            {prefix}
+            {label.padEnd(11)}
+          </Text>
           <TextInput value={fieldValue} onChange={setFieldValue} />
         </Box>
       );
@@ -261,9 +310,11 @@ export function EditorTab() {
     return (
       <Box>
         <Text color={focused ? 'cyan' : undefined} bold={focused}>
-          {prefix}{label.padEnd(11)}{value}
+          {prefix}
+          {label.padEnd(11)}
+          {value}
         </Text>
-        {extra && <Text dimColor>  {extra}</Text>}
+        {extra && <Text dimColor> {extra}</Text>}
       </Box>
     );
   }
@@ -272,27 +323,43 @@ export function EditorTab() {
     <Box>
       {/* Left: Rule list */}
       <Box flexDirection="column" width="50%">
-        <Text bold dimColor>Rules</Text>
+        <Text bold dimColor>
+          Rules
+        </Text>
         {config.rules.map((rule, i) => (
           <Text key={i} color={i === selectedIndex ? 'cyan' : 'gray'} bold={i === selectedIndex}>
-            {i === selectedIndex ? '▸' : ' '} [{i + 1}] CC {rule.cc.toString().padStart(3)}  {rule.label.slice(0, 18).padEnd(18)}  {rule.curve}
+            {i === selectedIndex ? '▸' : ' '} [{i + 1}] CC {rule.cc.toString().padStart(3)}{' '}
+            {rule.label.slice(0, 18).padEnd(18)} {rule.curve}
           </Text>
         ))}
         <Box marginTop={1} flexDirection="column">
-          <Text bold dimColor>Macros</Text>
+          <Text bold dimColor>
+            Macros
+          </Text>
           {macros.map((macro, i) => (
-            <Text key={`macro-${i}`} color={i === selectedMacroIndex ? 'cyan' : 'gray'} dimColor={i !== selectedMacroIndex}>
-              {i === selectedMacroIndex ? '▸' : ' '} CC {macro.input.toString().padStart(3)} → {macro.outputs.map(o => `CC${o.cc}`).join(', ')}  {macro.label}
+            <Text
+              key={`macro-${i}`}
+              color={i === selectedMacroIndex ? 'cyan' : 'gray'}
+              dimColor={i !== selectedMacroIndex}
+            >
+              {i === selectedMacroIndex ? '▸' : ' '} CC {macro.input.toString().padStart(3)} →{' '}
+              {macro.outputs.map((o) => `CC${o.cc}`).join(', ')} {macro.label}
             </Text>
           ))}
         </Box>
         <Box marginTop={1}>
-          <Text color="gray">  [A] Add rule  [N] Add macro  [Enter] Edit</Text>
+          <Text color="gray"> [A] Add rule [N] Add macro [Enter] Edit</Text>
         </Box>
       </Box>
 
       {/* Right: Rule detail / edit form */}
-      <Box flexDirection="column" width="50%" borderStyle="single" borderColor={isEditing ? 'cyan' : 'gray'} paddingX={1}>
+      <Box
+        flexDirection="column"
+        width="50%"
+        borderStyle="single"
+        borderColor={isEditing ? 'cyan' : 'gray'}
+        paddingX={1}
+      >
         {selectedRule ? (
           <>
             <Box>
@@ -306,16 +373,28 @@ export function EditorTab() {
               </Box>
             ) : (
               <Box flexDirection="column" marginTop={1}>
-                {renderField('cc', 'CC:', String(selectedRule.cc),
-                  isEditing && currentField === 'cc' ? '[L] MIDI Learn  [Enter] Edit' : undefined)}
-                {renderField('label', 'Label:', selectedRule.label,
-                  isEditing && currentField === 'label' ? '[Enter] Edit' : undefined)}
+                {renderField(
+                  'cc',
+                  'CC:',
+                  String(selectedRule.cc),
+                  isEditing && currentField === 'cc' ? '[L] MIDI Learn  [Enter] Edit' : undefined,
+                )}
+                {renderField(
+                  'label',
+                  'Label:',
+                  selectedRule.label,
+                  isEditing && currentField === 'label' ? '[Enter] Edit' : undefined,
+                )}
                 {renderField('inputMin', 'Input Min:', String(selectedRule.inputMin))}
                 {renderField('inputMax', 'Input Max:', String(selectedRule.inputMax))}
                 {renderField('outputMin', 'Output Min:', String(selectedRule.outputMin))}
                 {renderField('outputMax', 'Output Max:', String(selectedRule.outputMax))}
-                {renderField('curve', 'Curve:', `${isEditing ? '◀ ' : ''}${selectedRule.curve}${isEditing ? ' ▸' : ''}`,
-                  CURVE_PREVIEW[selectedRule.curve])}
+                {renderField(
+                  'curve',
+                  'Curve:',
+                  `${isEditing ? '◀ ' : ''}${selectedRule.curve}${isEditing ? ' ▸' : ''}`,
+                  CURVE_PREVIEW[selectedRule.curve],
+                )}
                 {renderField('smoothing', 'Smooth:', String(selectedRule.smoothing ?? 0))}
                 {renderField('invert', 'Invert:', selectedRule.invert ? 'Yes' : 'No')}
                 {renderField('mode', 'Mode:', selectedRule.mode ?? 'normal')}
@@ -324,9 +403,9 @@ export function EditorTab() {
 
             <Box marginTop={1}>
               {isEditing ? (
-                <Text dimColor>[↑↓] Fields  [Esc] Back  [S]ave  [D]el  [Enter] Edit field</Text>
+                <Text dimColor>[↑↓] Fields [Esc] Back [S]ave [D]el [Enter] Edit field</Text>
               ) : (
-                <Text dimColor>[↑↓] Rules  [Enter] Edit  [A] Add  [N] Macro</Text>
+                <Text dimColor>[↑↓] Rules [Enter] Edit [A] Add [N] Macro</Text>
               )}
             </Box>
             {state.saveStatus && (

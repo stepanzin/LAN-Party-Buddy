@@ -1,16 +1,25 @@
-import React from 'react';
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
-import { render } from 'ink-testing-library';
+import { describe, expect, it, mock } from 'bun:test';
 import { App } from '@adapters/ink-tui/app';
 import { TuiStore } from '@adapters/ink-tui/tui-store';
 import type { AppConfig } from '@domain/config';
 import type { ConfigEditorPort } from '@ports/config-editor.port';
+import { render } from 'ink-testing-library';
+import React from 'react';
 
 const TEST_CONFIG: AppConfig = {
   deviceName: 'Test Output',
   rules: [
     { cc: 4, label: 'Expression', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' },
-    { cc: 64, label: 'Sustain', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear', mode: 'toggle' },
+    {
+      cc: 64,
+      label: 'Sustain',
+      inputMin: 0,
+      inputMax: 127,
+      outputMin: 0,
+      outputMax: 127,
+      curve: 'linear',
+      mode: 'toggle',
+    },
   ],
 };
 
@@ -21,18 +30,15 @@ function renderApp(storeOverrides?: Partial<{ config: AppConfig; systemMessage: 
     store.setSystemMessage(storeOverrides.systemMessage);
   }
 
-  const { lastFrame, stdin, unmount } = render(
-    React.createElement(App, { store }),
-  );
+  const { lastFrame, stdin, unmount } = render(React.createElement(App, { store }));
 
   return { store, lastFrame, stdin, unmount };
 }
 
 // Helper: wait for Ink to process state update
-const tick = () => new Promise(r => setTimeout(r, 30));
+const tick = () => new Promise((r) => setTimeout(r, 30));
 
 describe('TUI Interaction: ink-testing-library', () => {
-
   // -----------------------------------------------------------------------
   // Tab switching
   // -----------------------------------------------------------------------
@@ -218,8 +224,11 @@ describe('TUI Interaction: ink-testing-library', () => {
     it('shows updated activity when store changes', async () => {
       const { store, lastFrame, unmount } = renderApp();
       store.pushActivity({
-        cc: 4, value: 80, mappedValue: 80,
-        ruleLabel: 'Expression', timestamp: Date.now(),
+        cc: 4,
+        value: 80,
+        mappedValue: 80,
+        ruleLabel: 'Expression',
+        timestamp: Date.now(),
       });
       await tick();
       const frame = lastFrame();
@@ -350,9 +359,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(SINGLE_RULE_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Switch to editor tab
       stdin.write('2');
@@ -385,9 +392,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(TEST_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Start on monitor tab
       expect(lastFrame()).toContain('[1] Monitor');
@@ -427,9 +432,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(TEST_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // No unmapped CCs — press 'a'
       stdin.write('a');
@@ -448,9 +451,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(TEST_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Push two unmapped CCs — CC 33 first, then CC 55
       store.pushUnmapped(33, 100);
@@ -462,9 +463,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       stdin.write('a');
       await tick();
 
-      expect(editor.addRule).toHaveBeenCalledWith(
-        expect.objectContaining({ cc: 55, label: 'CC 55' }),
-      );
+      expect(editor.addRule).toHaveBeenCalledWith(expect.objectContaining({ cc: 55, label: 'CC 55' }));
 
       unmount();
     });
@@ -479,7 +478,11 @@ describe('TUI Interaction: ink-testing-library', () => {
       const configWithMacros: AppConfig = {
         ...TEST_CONFIG,
         macros: [
-          { input: 10, label: 'My Macro', outputs: [{ cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'linear' as const }] },
+          {
+            input: 10,
+            label: 'My Macro',
+            outputs: [{ cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'linear' as const }],
+          },
         ],
       };
 
@@ -487,9 +490,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(configWithMacros);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Switch to editor tab
       stdin.write('2');
@@ -507,9 +508,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(TEST_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Switch to editor tab
       stdin.write('2');
@@ -536,9 +535,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(TEST_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Switch to editor tab and enter edit mode
       stdin.write('2');
@@ -560,8 +557,16 @@ describe('TUI Interaction: ink-testing-library', () => {
       const configWithMacros: AppConfig = {
         ...TEST_CONFIG,
         macros: [
-          { input: 10, label: 'Macro One', outputs: [{ cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'linear' as const }] },
-          { input: 11, label: 'Macro Two', outputs: [{ cc: 21, label: 'Out2', outputMin: 0, outputMax: 127, curve: 'linear' as const }] },
+          {
+            input: 10,
+            label: 'Macro One',
+            outputs: [{ cc: 20, label: 'Out1', outputMin: 0, outputMax: 127, curve: 'linear' as const }],
+          },
+          {
+            input: 11,
+            label: 'Macro Two',
+            outputs: [{ cc: 21, label: 'Out2', outputMin: 0, outputMax: 127, curve: 'linear' as const }],
+          },
         ],
       };
 
@@ -569,9 +574,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(configWithMacros);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Switch to editor tab
       stdin.write('2');
@@ -598,9 +601,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       store.setConfig(TEST_CONFIG);
       const editor = createMockEditor(store);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
 
       // Switch to editor tab
       stdin.write('2');
@@ -619,9 +620,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(TEST_CONFIG);
 
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store }));
 
       // Switch to editor tab
       stdin.write('2');
@@ -641,15 +640,33 @@ describe('TUI Interaction: ink-testing-library', () => {
     const EDIT_CONFIG: AppConfig = {
       deviceName: 'Test',
       rules: [
-        { cc: 4, label: 'Expression', inputMin: 10, inputMax: 120, outputMin: 0, outputMax: 127, curve: 'linear', smoothing: 3 },
-        { cc: 64, label: 'Sustain', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear', mode: 'toggle' },
+        {
+          cc: 4,
+          label: 'Expression',
+          inputMin: 10,
+          inputMax: 120,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear',
+          smoothing: 3,
+        },
+        {
+          cc: 64,
+          label: 'Sustain',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear',
+          mode: 'toggle',
+        },
       ],
     };
 
     async function enterEditMode(stdin: { write: (s: string) => void }) {
-      stdin.write('2');    // switch to editor tab
+      stdin.write('2'); // switch to editor tab
       await tick();
-      stdin.write('\r');   // enter edit mode
+      stdin.write('\r'); // enter edit mode
       await tick();
     }
 
@@ -657,9 +674,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       const frame = lastFrame();
@@ -674,9 +689,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // First field should be CC
@@ -697,9 +710,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // Move down to Label
@@ -718,9 +729,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // Already on first field (CC), press up
@@ -736,9 +745,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // Navigate to the last field by pressing down many times
@@ -758,9 +765,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // Move to Label field
@@ -781,9 +786,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // Navigate to Curve field (CC=0, Label=1, InputMin=2, InputMax=3, OutputMin=4, OutputMax=5, Curve=6)
@@ -806,9 +809,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       const store = new TuiStore();
       store.setConfig(EDIT_CONFIG);
       const editor = createMockEditor(store);
-      const { lastFrame, stdin, unmount } = render(
-        React.createElement(App, { store, configEditor: editor }),
-      );
+      const { lastFrame, stdin, unmount } = render(React.createElement(App, { store, configEditor: editor }));
       await enterEditMode(stdin);
 
       // Navigate down a few fields

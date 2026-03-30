@@ -1,17 +1,14 @@
 import { describe, expect, it } from 'bun:test';
 
 import {
-  MSG_CC,
-  MSG_HEARTBEAT,
-  MSG_DISCONNECT,
-  encodeCC,
-  encodeHeartbeat,
-  encodeDisconnect,
   decodeMessage,
-  encodePinChallenge,
   decodePinChallenge,
-  encodePinResponse,
   decodePinResponse,
+  encodeCC,
+  encodeDisconnect,
+  encodeHeartbeat,
+  encodePinChallenge,
+  encodePinResponse,
   extractFrames,
 } from '@domain/network-protocol';
 
@@ -44,7 +41,7 @@ describe('decodeMessage', () => {
   it('returns null for unknown type byte', () => {
     expect(decodeMessage(new Uint8Array([0x03, 0, 0, 0]))).toBeNull();
     expect(decodeMessage(new Uint8Array([0x00, 0, 0, 0]))).toBeNull();
-    expect(decodeMessage(new Uint8Array([0xFE, 0, 0, 0]))).toBeNull();
+    expect(decodeMessage(new Uint8Array([0xfe, 0, 0, 0]))).toBeNull();
   });
 
   it('returns null for CC with channel > 15', () => {
@@ -85,7 +82,7 @@ describe('encodeHeartbeat', () => {
 describe('encodeDisconnect', () => {
   it('produces [0xFF, 0, 0, 0]', () => {
     const result = encodeDisconnect();
-    expect(result).toEqual(new Uint8Array([0xFF, 0, 0, 0]));
+    expect(result).toEqual(new Uint8Array([0xff, 0, 0, 0]));
   });
 
   it('roundtrips with decodeMessage', () => {

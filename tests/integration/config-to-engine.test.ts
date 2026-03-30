@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import { resolve } from 'node:path';
 
-import { YamlConfigAdapter, parseConfig } from '@adapters/yaml-config.adapter';
-import { buildRules, buildMacros } from '@app/rule-compiler';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
-import type { MidiCC } from '@domain/midi-message';
+import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { buildMacros, buildRules } from '@app/rule-compiler';
 import type { AppConfig } from '@domain/config';
+import { type EngineState, INITIAL_ENGINE_STATE, processMidiMessage } from '@domain/mapping-engine';
+import type { MidiCC } from '@domain/midi-message';
 
 const CONFIG_PATH = resolve(import.meta.dir, '../../config.yaml');
 
@@ -100,9 +100,7 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
     // Build a config with a macro: CC 1 input -> CC 74 and CC 71 outputs
     const config: AppConfig = {
       deviceName: 'Test',
-      rules: [
-        { cc: 1, label: 'Mod Wheel', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' },
-      ],
+      rules: [{ cc: 1, label: 'Mod Wheel', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' }],
       macros: [
         {
           input: 1,
@@ -194,7 +192,16 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
     const config: AppConfig = {
       deviceName: 'Test',
       rules: [
-        { cc: 10, label: 'Inverted', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear', invert: true },
+        {
+          cc: 10,
+          label: 'Inverted',
+          inputMin: 0,
+          inputMax: 127,
+          outputMin: 0,
+          outputMax: 127,
+          curve: 'linear',
+          invert: true,
+        },
       ],
     };
 

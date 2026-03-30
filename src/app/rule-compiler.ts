@@ -1,8 +1,12 @@
-import { flow } from 'fp-ts/function';
-
 import type { AppConfig } from '@domain/config';
-import type { CompiledRule, CompiledRules, CompiledMacro, CompiledMacros } from '@domain/mapping-rule';
-import { mapValueClampedCurried, mapValueLogClampedCurried, mapValueExponentialCurried, mapValueSCurveCurried } from '@domain/value-curves';
+import type { CompiledMacro, CompiledMacros, CompiledRule, CompiledRules } from '@domain/mapping-rule';
+import {
+  mapValueClampedCurried,
+  mapValueExponentialCurried,
+  mapValueLogClampedCurried,
+  mapValueSCurveCurried,
+} from '@domain/value-curves';
+import { flow } from 'fp-ts/function';
 
 const CURVE_MAPPERS = {
   linear: mapValueClampedCurried,
@@ -19,10 +23,7 @@ export function buildRules(config: AppConfig): CompiledRules {
     const [outMin, outMax] = rule.invert ? [rule.outputMax, rule.outputMin] : [rule.outputMin, rule.outputMax];
 
     result[rule.cc.toString()] = {
-      transform: flow(
-        CURVE_MAPPERS[rule.curve]([inputMin, inputMax], [outMin, outMax]),
-        Math.round,
-      ),
+      transform: flow(CURVE_MAPPERS[rule.curve]([inputMin, inputMax], [outMin, outMax]), Math.round),
       smoothing: rule.smoothing ?? 0,
       mode: rule.mode ?? 'normal',
     };
@@ -38,10 +39,7 @@ export function buildMacros(config: AppConfig): CompiledMacros {
       const [outMin, outMax] = out.invert ? [out.outputMax, out.outputMin] : [out.outputMin, out.outputMax];
       return {
         outputCc: out.cc,
-        transform: flow(
-          CURVE_MAPPERS[out.curve]([0, 127], [outMin, outMax]),
-          Math.round,
-        ),
+        transform: flow(CURVE_MAPPERS[out.curve]([0, 127], [outMin, outMax]), Math.round),
       };
     });
   }

@@ -1,4 +1,4 @@
-import type { AppConfig, RuleConfig, MacroConfig } from '@domain/config';
+import type { AppConfig, MacroConfig, RuleConfig } from '@domain/config';
 
 export interface ConfigEditorPort {
   getConfig(): AppConfig;

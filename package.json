@@ -5,14 +5,21 @@
   "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
-    "compile": "bun build ./src/index.ts --compile --outfile build/lan-party-buddy"
+    "compile": "bun build ./src/index.ts --compile --outfile build/lan-party-buddy",
+    "lint": "bunx biome check src/ tests/",
+    "lint:fix": "bunx biome check --write src/ tests/",
+    "format": "bunx biome format src/ tests/",
+    "format:fix": "bunx biome format --write src/ tests/",
+    "check": "bunx biome check --write src/ tests/"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
     "@types/bun": "latest",
     "@types/figlet": "^1.7.0",
     "@types/react": "^19.2.14",
     "fast-check": "^4.6.0",
-    "ink-testing-library": "^4.0.0"
+    "ink-testing-library": "^4.0.0",
+    "lefthook": "^2.1.4"
   },
   "peerDependencies": {
     "typescript": "^5"

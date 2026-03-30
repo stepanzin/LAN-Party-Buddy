@@ -1,8 +1,7 @@
-import { describe, it, expect } from 'bun:test';
-import { buildRules, buildMacros } from '@app/rule-compiler';
-import type { CompiledRule, CompiledRules, CompiledMacro, CompiledMacros } from '@domain/mapping-rule';
-import { mapValueClamped, mapValueLogClamped, mapValueExponential, mapValueSCurve } from '@domain/value-curves';
+import { describe, expect, it } from 'bun:test';
+import { buildMacros, buildRules } from '@app/rule-compiler';
 import type { AppConfig } from '@domain/config';
+import { mapValueClamped, mapValueExponential, mapValueLogClamped, mapValueSCurve } from '@domain/value-curves';
 
 // ---------------------------------------------------------------------------
 // buildRules

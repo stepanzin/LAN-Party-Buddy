@@ -1,6 +1,12 @@
 import { EventEmitter } from 'node:events';
+import {
+  decodeMessage,
+  decodePinChallenge,
+  encodeHeartbeat,
+  encodePinResponse,
+  extractFrames,
+} from '@domain/network-protocol';
 import type { Socket, TCPSocketListener } from 'bun';
-import { decodePinChallenge, encodePinResponse, decodeMessage, encodeHeartbeat, extractFrames, type NetworkMessage } from '@domain/network-protocol';
 
 type ClientState = {
   socket: Socket<{ id: string }>;
@@ -117,7 +123,7 @@ export class TcpServer extends EventEmitter {
   }
 
   getClientCount(): number {
-    return [...this.clients.values()].filter(c => c.authenticated).length;
+    return [...this.clients.values()].filter((c) => c.authenticated).length;
   }
 
   getClients(): Array<{ id: string; address: string }> {
@@ -132,7 +138,9 @@ export class TcpServer extends EventEmitter {
       this.heartbeatInterval = null;
     }
     for (const [, client] of this.clients) {
-      try { client.socket.end(); } catch {}
+      try {
+        client.socket.end();
+      } catch {}
     }
     this.clients.clear();
     this.server?.stop();

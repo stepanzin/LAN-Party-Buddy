@@ -1,10 +1,10 @@
+import type { CompiledMacros, CompiledRules } from './mapping-rule.ts';
 import type { MidiCC } from './midi-message.ts';
-import type { CompiledRules, CompiledMacros } from './mapping-rule.ts';
 
 export type EngineState = {
   readonly prevCode: number | null;
-  readonly smoothingBuffers: Record<string, number[]>;   // cc → last N values
-  readonly toggleStates: Record<string, boolean>;        // cc → on/off
+  readonly smoothingBuffers: Record<string, number[]>; // cc → last N values
+  readonly toggleStates: Record<string, boolean>; // cc → on/off
 };
 
 export const INITIAL_ENGINE_STATE: EngineState = {
@@ -59,7 +59,6 @@ export function processMidiMessage(
   const newToggleStates = { ...state.toggleStates };
 
   if (rule !== undefined) {
-
     // Smoothing logic (applied before curve mapping)
     let inputValue = value;
     if (rule.smoothing > 0) {

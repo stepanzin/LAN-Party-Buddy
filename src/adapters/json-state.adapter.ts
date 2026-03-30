@@ -1,7 +1,7 @@
-import { join, dirname } from 'node:path';
-import { homedir } from 'node:os';
 import { mkdir } from 'node:fs/promises';
-import type { StateStorePort, AppState } from '@ports/state-store.port';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
+import type { AppState, StateStorePort } from '@ports/state-store.port';
 
 export class JsonStateAdapter implements StateStorePort {
   private path: string;
