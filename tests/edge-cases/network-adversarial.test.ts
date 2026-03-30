@@ -1,14 +1,14 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '../../src/adapters/network/tcp-server';
-import { TcpClient } from '../../src/adapters/network/tcp-client';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { TcpClient } from '@adapters/network/tcp-client';
 import {
   encodeCC,
   encodeHeartbeat,
   encodeDisconnect,
   encodePinChallenge,
   MSG_CC,
-} from '../../src/domain/network-protocol';
-import type { NetworkMessage } from '../../src/domain/network-protocol';
+} from '@domain/network-protocol';
+import type { NetworkMessage } from '@domain/network-protocol';
 
 // ---------------------------------------------------------------------------
 // Port allocation — starts at 19300 to avoid conflicts with other suites

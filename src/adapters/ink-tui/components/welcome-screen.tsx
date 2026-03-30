@@ -7,13 +7,13 @@ import calvinSPath from '../calvin-s.flf' with { type: 'file' };
 const calvinSFont = await Bun.file(calvinSPath).text();
 figlet.parseFont('Calvin S', calvinSFont);
 
-import type { WelcomeChoice } from '../../../ports/user-interface.port';
+import type { WelcomeChoice } from '@ports/user-interface.port';
 
 type Props = {
   onSelect: (choice: WelcomeChoice) => void;
 };
 
-const ASCII_TITLE = figlet.textSync('LAN Party Buddy', { font: 'Calvin S' });
+const ASCII_TITLE = figlet.textSync('MIDI Mapper', { font: 'Calvin S' });
 
 const MENU_ITEMS = [
   { key: 'local' as const, label: 'Local Mode', desc: 'Controller \u2192 Mapper \u2192 Virtual Port', available: true },

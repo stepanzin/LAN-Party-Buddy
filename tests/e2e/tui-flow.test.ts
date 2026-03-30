@@ -3,17 +3,17 @@ import { join } from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
-import { MidiMapperApp, type MidiMapperDeps } from '../../src/app/midi-mapper.app';
-import { YamlConfigAdapter } from '../../src/adapters/yaml-config.adapter';
-import { JsonStateAdapter } from '../../src/adapters/json-state.adapter';
-import { ConfigEditorService } from '../../src/app/config-editor.service';
-import { YamlConfigWriterAdapter } from '../../src/adapters/yaml-config.adapter';
-import { TuiStore } from '../../src/adapters/ink-tui/tui-store';
-import { InkTuiAdapter } from '../../src/adapters/ink-tui/ink-tui.adapter';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../src/ports/midi-input.port';
-import type { MidiOutputPort } from '../../src/ports/midi-output.port';
-import type { DeviceDiscoveryPort, MidiDevice } from '../../src/ports/device-discovery.port';
-import type { AppConfig } from '../../src/domain/config';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
+import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
+import { ConfigEditorService } from '@app/config-editor.service';
+import { YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { TuiStore } from '@adapters/ink-tui/tui-store';
+import { InkTuiAdapter } from '@adapters/ink-tui/ink-tui.adapter';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import type { AppConfig } from '@domain/config';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -108,7 +108,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
   let configPath: string;
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-tui-e2e-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-tui-e2e-'));
     configPath = join(tmpDir, 'config.yaml');
     await Bun.write(configPath, TEST_CONFIG_YAML);
   });

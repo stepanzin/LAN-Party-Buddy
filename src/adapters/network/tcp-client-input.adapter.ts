@@ -1,7 +1,7 @@
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../ports/midi-input.port';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
 import { TcpClient } from './tcp-client';
 import { MdnsBrowserDiscoveryAdapter } from './mdns-browser-discovery.adapter';
-import type { NetworkMessage } from '../../domain/network-protocol';
+import type { NetworkMessage } from '@domain/network-protocol';
 
 export class TcpClientInputAdapter implements MidiInputPort {
   private client: TcpClient;

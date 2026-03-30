@@ -1,10 +1,10 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import { render } from 'ink-testing-library';
-import { App } from '../../src/adapters/ink-tui/app';
-import { TuiStore } from '../../src/adapters/ink-tui/tui-store';
-import type { AppConfig } from '../../src/domain/config';
-import type { ConfigEditorPort } from '../../src/ports/config-editor.port';
+import { App } from '@adapters/ink-tui/app';
+import { TuiStore } from '@adapters/ink-tui/tui-store';
+import type { AppConfig } from '@domain/config';
+import type { ConfigEditorPort } from '@ports/config-editor.port';
 
 const TEST_CONFIG: AppConfig = {
   deviceName: 'Test Output',
@@ -278,9 +278,9 @@ describe('TUI Interaction: ink-testing-library', () => {
   // -----------------------------------------------------------------------
 
   describe('header', () => {
-    it('shows LAN Party Buddy title', () => {
+    it('shows MIDI Mapper title', () => {
       const { lastFrame, unmount } = renderApp();
-      expect(lastFrame()).toContain('LAN Party Buddy');
+      expect(lastFrame()).toContain('MIDI Mapper');
       unmount();
     });
 

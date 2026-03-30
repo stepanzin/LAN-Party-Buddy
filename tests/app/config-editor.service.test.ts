@@ -1,7 +1,7 @@
 import { describe, it, expect, mock } from 'bun:test';
-import { ConfigEditorService } from '../../src/app/config-editor.service';
-import type { ConfigWriterPort } from '../../src/ports/config-writer.port';
-import type { AppConfig, RuleConfig, MacroConfig } from '../../src/domain/config';
+import { ConfigEditorService } from '@app/config-editor.service';
+import type { ConfigWriterPort } from '@ports/config-writer.port';
+import type { AppConfig, RuleConfig, MacroConfig } from '@domain/config';
 
 const makeRule = (cc: number, label = `CC${cc}`): RuleConfig => ({
   cc,

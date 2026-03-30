@@ -1,6 +1,6 @@
-import type { MidiOutputPort } from '../../ports/midi-output.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
 import { TcpServer } from './tcp-server';
-import { encodeCC } from '../../domain/network-protocol';
+import { encodeCC } from '@domain/network-protocol';
 
 export class TcpBroadcastOutputAdapter implements MidiOutputPort {
   private server: TcpServer;

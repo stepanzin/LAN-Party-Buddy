@@ -1,8 +1,8 @@
 import { flow } from 'fp-ts/function';
 
-import type { AppConfig } from '../domain/config';
-import type { CompiledRule, CompiledRules, CompiledMacro, CompiledMacros } from '../domain/mapping-rule';
-import { mapValueClampedCurried, mapValueLogClampedCurried, mapValueExponentialCurried, mapValueSCurveCurried } from '../domain/value-curves';
+import type { AppConfig } from '@domain/config';
+import type { CompiledRule, CompiledRules, CompiledMacro, CompiledMacros } from '@domain/mapping-rule';
+import { mapValueClampedCurried, mapValueLogClampedCurried, mapValueExponentialCurried, mapValueSCurveCurried } from '@domain/value-curves';
 
 const CURVE_MAPPERS = {
   linear: mapValueClampedCurried,

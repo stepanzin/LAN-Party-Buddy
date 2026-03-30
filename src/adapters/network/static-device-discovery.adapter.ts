@@ -1,4 +1,4 @@
-import type { DeviceDiscoveryPort, MidiDevice } from '../../ports/device-discovery.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
 
 export class StaticDeviceDiscoveryAdapter implements DeviceDiscoveryPort {
   constructor(private deviceName: string = 'Virtual Port (Host Mode)') {}

@@ -4,21 +4,21 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { EventEmitter } from 'node:events';
 
-import { MidiMapperApp, type MidiMapperDeps } from '../../src/app/midi-mapper.app.ts';
-import { YamlConfigAdapter, YamlConfigWriterAdapter } from '../../src/adapters/yaml-config.adapter.ts';
-import { JsonStateAdapter } from '../../src/adapters/json-state.adapter.ts';
-import { TcpServer } from '../../src/adapters/network/tcp-server.ts';
-import { TcpClient } from '../../src/adapters/network/tcp-client.ts';
-import { TcpBroadcastOutputAdapter } from '../../src/adapters/network/tcp-broadcast-output.adapter.ts';
-import { TcpClientInputAdapter } from '../../src/adapters/network/tcp-client-input.adapter.ts';
-import { MdnsBrowserDiscoveryAdapter } from '../../src/adapters/network/mdns-browser-discovery.adapter.ts';
-import { StaticDeviceDiscoveryAdapter } from '../../src/adapters/network/static-device-discovery.adapter.ts';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../src/ports/midi-input.port.ts';
-import type { MidiOutputPort } from '../../src/ports/midi-output.port.ts';
-import type { UserInterfacePort } from '../../src/ports/user-interface.port.ts';
-import type { MidiDevice } from '../../src/ports/device-discovery.port.ts';
-import type { MidiCC } from '../../src/domain/midi-message.ts';
-import { encodeCC } from '../../src/domain/network-protocol.ts';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
+import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
+import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
+import type { MidiDevice } from '@ports/device-discovery.port';
+import type { MidiCC } from '@domain/midi-message';
+import { encodeCC } from '@domain/network-protocol';
 
 // ---------------------------------------------------------------------------
 // Port allocation to avoid conflicts with other test suites
@@ -170,7 +170,7 @@ describe('E2E: Host -> Join Network Flow', () => {
   const clients: TcpClient[] = [];
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-host-join-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-host-join-'));
   });
 
   afterEach(async () => {

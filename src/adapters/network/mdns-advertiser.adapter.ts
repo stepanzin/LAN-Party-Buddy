@@ -12,7 +12,7 @@ export class MdnsAdvertiserAdapter {
     this.stopAdvertising();
     this.service = this.bonjour.publish({
       name,
-      type: 'lan-party-buddy',
+      type: 'midi-mapper',
       port,
       txt: {
         pin: pinRequired ? 'required' : 'open',

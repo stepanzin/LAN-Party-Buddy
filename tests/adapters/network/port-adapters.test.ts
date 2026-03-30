@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '../../../src/adapters/network/tcp-server';
-import { TcpClient } from '../../../src/adapters/network/tcp-client';
-import { TcpBroadcastOutputAdapter } from '../../../src/adapters/network/tcp-broadcast-output.adapter';
-import { TcpClientInputAdapter } from '../../../src/adapters/network/tcp-client-input.adapter';
-import { MdnsBrowserDiscoveryAdapter } from '../../../src/adapters/network/mdns-browser-discovery.adapter';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 import { EventEmitter } from 'node:events';
 
 // Helper

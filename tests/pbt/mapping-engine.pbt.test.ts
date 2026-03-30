@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 import fc from 'fast-check';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '../../src/domain/mapping-engine';
-import type { CompiledRules, CompiledMacros, CompiledRule } from '../../src/domain/mapping-rule';
-import type { MidiCC } from '../../src/domain/midi-message';
+import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
+import type { CompiledRules, CompiledMacros, CompiledRule } from '@domain/mapping-rule';
+import type { MidiCC } from '@domain/midi-message';
 
 const validMidiCC = fc.record({
   channel: fc.integer({ min: 0, max: 15 }),

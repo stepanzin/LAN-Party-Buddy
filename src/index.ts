@@ -1,27 +1,27 @@
 import { parseArgs } from 'util';
 import { resolve, dirname } from 'node:path';
 
-import { MidiMapperApp } from './app/midi-mapper.app';
-import { YamlConfigAdapter, YamlConfigWriterAdapter } from './adapters/yaml-config.adapter';
-import { JsonStateAdapter } from './adapters/json-state.adapter';
-import { JulusianMidiInputAdapter, JulusianMidiOutputAdapter, JulusianDeviceDiscoveryAdapter } from './adapters/julusian-midi.adapter';
-import { InkTuiAdapter } from './adapters/ink-tui/ink-tui.adapter';
-import { TuiStore } from './adapters/ink-tui/tui-store';
-import { ConfigEditorService } from './app/config-editor.service';
-import type { MidiInputPort } from './ports/midi-input.port';
-import type { MidiOutputPort } from './ports/midi-output.port';
-import type { DeviceDiscoveryPort } from './ports/device-discovery.port';
-import type { WelcomeChoice } from './ports/user-interface.port';
+import { MidiMapperApp } from '@app/midi-mapper.app';
+import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
+import { JulusianMidiInputAdapter, JulusianMidiOutputAdapter, JulusianDeviceDiscoveryAdapter } from '@adapters/julusian-midi.adapter';
+import { InkTuiAdapter } from '@adapters/ink-tui/ink-tui.adapter';
+import { TuiStore } from '@adapters/ink-tui/tui-store';
+import { ConfigEditorService } from '@app/config-editor.service';
+import type { MidiInputPort } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
+import type { WelcomeChoice } from '@ports/user-interface.port';
 
 // Network adapters
-import { TcpServer } from './adapters/network/tcp-server';
-import { TcpClient } from './adapters/network/tcp-client';
-import { TcpBroadcastOutputAdapter } from './adapters/network/tcp-broadcast-output.adapter';
-import { TcpClientInputAdapter } from './adapters/network/tcp-client-input.adapter';
-import { VirtualPortInputAdapter } from './adapters/network/virtual-port-input.adapter';
-import { StaticDeviceDiscoveryAdapter } from './adapters/network/static-device-discovery.adapter';
-import { MdnsAdvertiserAdapter } from './adapters/network/mdns-advertiser.adapter';
-import { MdnsBrowserDiscoveryAdapter } from './adapters/network/mdns-browser-discovery.adapter';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+import { VirtualPortInputAdapter } from '@adapters/network/virtual-port-input.adapter';
+import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
+import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 
 const { values: args } = parseArgs({
   args: Bun.argv.slice(2),
@@ -43,7 +43,7 @@ const { path: configPath, exists: configExists } = findConfigPath(args.config);
 const configWriter = new YamlConfigWriterAdapter();
 const store = new TuiStore();
 const editorService = new ConfigEditorService(
-  { deviceName: 'LAN Party Buddy Output', rules: [] },
+  { deviceName: 'MIDI Mapper Output', rules: [] },
   configWriter,
 );
 editorService.onConfigChanged = (c) => store.setConfig(c);
@@ -89,11 +89,11 @@ if (mode === 'host') {
   });
 
   const advertiser = new MdnsAdvertiserAdapter();
-  advertiser.advertise(DEFAULT_PORT, 'LAN Party Buddy', false);
+  advertiser.advertise(DEFAULT_PORT, 'MIDI Mapper', false);
 
   store.setHostInfo(DEFAULT_PORT, null, 'open');
 
-  midiInput = new VirtualPortInputAdapter('LAN Party Buddy Input');
+  midiInput = new VirtualPortInputAdapter('MIDI Mapper Input');
   midiOutput = new TcpBroadcastOutputAdapter(tcpServer);
   deviceDiscovery = new StaticDeviceDiscoveryAdapter('Virtual Port (Host Mode)');
 

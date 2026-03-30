@@ -8,7 +8,7 @@ import {
   mapValueExponentialCurried,
   mapValueSCurve,
   mapValueSCurveCurried,
-} from "../../src/domain/value-curves";
+} from "@domain/value-curves";
 
 // ---------------------------------------------------------------------------
 // mapValueClamped

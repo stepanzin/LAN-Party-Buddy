@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
-import { TuiStore } from '../../../src/adapters/ink-tui/tui-store';
+import { TuiStore } from '@adapters/ink-tui/tui-store';
 import type {
   ActivityEntry,
   MacroActivityEntry,
   LogEntry,
-} from '../../../src/adapters/ink-tui/tui-store';
-import type { AppConfig } from '../../../src/domain/config';
-import type { MidiDevice } from '../../../src/ports/device-discovery.port';
+} from '@adapters/ink-tui/tui-store';
+import type { AppConfig } from '@domain/config';
+import type { MidiDevice } from '@ports/device-discovery.port';
 
 function makeActivity(cc: number, value = 64, mappedValue = 64): ActivityEntry {
   return { cc, value, mappedValue, timestamp: Date.now() };

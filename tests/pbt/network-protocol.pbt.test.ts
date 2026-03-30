@@ -6,7 +6,7 @@ import {
   extractFrames,
   encodePinChallenge,
   decodePinChallenge,
-} from '../../src/domain/network-protocol';
+} from '@domain/network-protocol';
 
 const validChannel = fc.integer({ min: 0, max: 15 });
 const validCC = fc.integer({ min: 0, max: 127 });

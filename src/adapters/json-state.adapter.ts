@@ -1,13 +1,13 @@
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { mkdir } from 'node:fs/promises';
-import type { StateStorePort, AppState } from '../ports/state-store.port';
+import type { StateStorePort, AppState } from '@ports/state-store.port';
 
 export class JsonStateAdapter implements StateStorePort {
   private path: string;
 
   constructor(path?: string) {
-    this.path = path ?? join(homedir(), '.lan-party-buddy', 'state.json');
+    this.path = path ?? join(homedir(), '.midi-mapper', 'state.json');
   }
 
   async load(): Promise<AppState> {

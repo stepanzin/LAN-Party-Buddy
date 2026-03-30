@@ -3,13 +3,13 @@ import { join } from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
-import { MidiMapperApp, type MidiMapperDeps } from '../../src/app/midi-mapper.app.ts';
-import { YamlConfigAdapter } from '../../src/adapters/yaml-config.adapter.ts';
-import { JsonStateAdapter } from '../../src/adapters/json-state.adapter.ts';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../src/ports/midi-input.port.ts';
-import type { MidiOutputPort } from '../../src/ports/midi-output.port.ts';
-import type { DeviceDiscoveryPort, MidiDevice } from '../../src/ports/device-discovery.port.ts';
-import type { UserInterfacePort } from '../../src/ports/user-interface.port.ts';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
+import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -136,7 +136,7 @@ describe('E2E: Full Application Flow', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-e2e-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-e2e-'));
     await Bun.write(join(tmpDir, 'test-config.yaml'), TEST_CONFIG_YAML);
   });
 

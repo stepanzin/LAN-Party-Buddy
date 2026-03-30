@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { StaticDeviceDiscoveryAdapter } from '../../../src/adapters/network/static-device-discovery.adapter';
+import { StaticDeviceDiscoveryAdapter } from '@adapters/network/static-device-discovery.adapter';
 
 describe('StaticDeviceDiscoveryAdapter', () => {
   it('listDevices returns single device', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { MdnsAdvertiserAdapter } from '../../src/adapters/network/mdns-advertiser.adapter';
-import { MdnsBrowserDiscoveryAdapter } from '../../src/adapters/network/mdns-browser-discovery.adapter';
+import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 
 describe('mDNS Advertiser + Browser Integration', () => {
   const advertisers: MdnsAdvertiserAdapter[] = [];

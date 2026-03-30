@@ -1,4 +1,4 @@
-import type { MidiCC } from '../domain/midi-message';
+import type { MidiCC } from '@domain/midi-message';
 
 export type MidiMessageHandler = (msg: MidiCC) => void;
 export type MidiErrorHandler = (error: Error) => void;

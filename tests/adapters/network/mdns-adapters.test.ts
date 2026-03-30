@@ -1,7 +1,7 @@
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
 import { EventEmitter } from 'node:events';
-import { MdnsAdvertiserAdapter } from '../../../src/adapters/network/mdns-advertiser.adapter';
-import { MdnsBrowserDiscoveryAdapter } from '../../../src/adapters/network/mdns-browser-discovery.adapter';
+import { MdnsAdvertiserAdapter } from '@adapters/network/mdns-advertiser.adapter';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
 
 // --- Mock Bonjour ---
 
@@ -38,7 +38,7 @@ describe('MdnsAdvertiserAdapter', () => {
 
     expect(mockBonjour.publish).toHaveBeenCalledTimes(1);
     expect(publishedServices[0].name).toBe('My Host');
-    expect(publishedServices[0].type).toBe('lan-party-buddy');
+    expect(publishedServices[0].type).toBe('midi-mapper');
     expect(publishedServices[0].port).toBe(9900);
     expect(publishedServices[0].txt.pin).toBe('open');
     expect(publishedServices[0].txt.version).toBe('1');
@@ -101,7 +101,7 @@ describe('MdnsBrowserDiscoveryAdapter', () => {
 
     adapter.startBrowsing();
 
-    expect(mockBonjour.find).toHaveBeenCalledWith({ type: 'lan-party-buddy' });
+    expect(mockBonjour.find).toHaveBeenCalledWith({ type: 'midi-mapper' });
 
     adapter.destroy();
   });

@@ -3,12 +3,12 @@ import { join } from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
-import { JsonStateAdapter } from '../../src/adapters/json-state.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
 
 let tmpDir: string;
 
 beforeEach(async () => {
-  tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-integration-'));
+  tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-integration-'));
 });
 
 afterEach(async () => {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from 'ink';
-import type { UserInterfacePort, WelcomeChoice } from '../../ports/user-interface.port';
-import type { MonitorPort } from '../../ports/monitor.port';
-import type { MidiDevice } from '../../ports/device-discovery.port';
-import type { ConfigEditorPort } from '../../ports/config-editor.port';
+import type { UserInterfacePort, WelcomeChoice } from '@ports/user-interface.port';
+import type { MonitorPort } from '@ports/monitor.port';
+import type { MidiDevice } from '@ports/device-discovery.port';
+import type { ConfigEditorPort } from '@ports/config-editor.port';
 import { TuiStore } from './tui-store';
 import { App } from './app';
 import { WelcomeScreen } from './components/welcome-screen';

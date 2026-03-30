@@ -1,8 +1,8 @@
 import midi from '@julusian/midi';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../ports/midi-input.port';
-import type { MidiOutputPort } from '../ports/midi-output.port';
-import type { DeviceDiscoveryPort, MidiDevice } from '../ports/device-discovery.port';
-import { parseMidiCC } from '../domain/midi-message';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import { parseMidiCC } from '@domain/midi-message';
 
 /**
  * Check whether a MIDI port with the given name already exists on the system.

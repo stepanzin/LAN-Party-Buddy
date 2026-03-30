@@ -3,7 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { StoreContext, EditorContext } from '../context';
 import { useTuiStore } from '../hooks/use-tui-store';
-import type { Curve, Mode } from '../../../domain/config';
+import type { Curve, Mode } from '@domain/config';
 
 const CURVES: Curve[] = ['linear', 'logarithmic', 'exponential', 's-curve'];
 const MODES: Mode[] = ['normal', 'toggle'];

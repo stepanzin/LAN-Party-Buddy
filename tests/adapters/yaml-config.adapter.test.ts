@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'bun:test';
 import { unlink } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
-import { YamlConfigAdapter, YamlConfigWriterAdapter, parseConfig } from '../../src/adapters/yaml-config.adapter';
-import type { AppConfig } from '../../src/domain/config';
+import { YamlConfigAdapter, YamlConfigWriterAdapter, parseConfig } from '@adapters/yaml-config.adapter';
+import type { AppConfig } from '@domain/config';
 
 // ---------------------------------------------------------------------------
 // parseConfig (unit tests — moved from config-loader.test.ts)
@@ -525,13 +525,13 @@ rules:
 network:
   port: 9900
   pin: "1234"
-  hostName: "My LAN Party Buddy"
+  hostName: "My MIDI Mapper"
 `;
       const config = parseConfig(yaml);
       expect(config.network).toBeDefined();
       expect(config.network!.port).toBe(9900);
       expect(config.network!.pin).toBe('1234');
-      expect(config.network!.hostName).toBe('My LAN Party Buddy');
+      expect(config.network!.hostName).toBe('My MIDI Mapper');
     });
 
     it('parses config with partial network section (port only)', () => {
@@ -827,7 +827,7 @@ macros: "not an array"
 describe('YamlConfigAdapter', () => {
   describe('load', () => {
     it('loads and parses a valid YAML file', async () => {
-      const tmp = `/tmp/lan-party-buddy-adapter-test-${Date.now()}.yaml`;
+      const tmp = `/tmp/midi-mapper-adapter-test-${Date.now()}.yaml`;
       await Bun.write(tmp, `
 deviceName: "File Test"
 rules:
@@ -852,7 +852,7 @@ rules:
     });
 
     it('throws on file with invalid config', async () => {
-      const tmp = `/tmp/lan-party-buddy-adapter-test-invalid-${Date.now()}.yaml`;
+      const tmp = `/tmp/midi-mapper-adapter-test-invalid-${Date.now()}.yaml`;
       await Bun.write(tmp, 'deviceName: 123');
       const adapter = new YamlConfigAdapter();
       await expect(adapter.load(tmp)).rejects.toThrow(/deviceName/);
@@ -890,7 +890,7 @@ describe('YamlConfigWriterAdapter', () => {
   };
 
   it('writes valid YAML that can be parsed back', async () => {
-    const tmp = `/tmp/lan-party-buddy-writer-test-${Date.now()}.yaml`;
+    const tmp = `/tmp/midi-mapper-writer-test-${Date.now()}.yaml`;
     const writer = new YamlConfigWriterAdapter();
 
     await writer.save(tmp, sampleConfig);
@@ -908,7 +908,7 @@ describe('YamlConfigWriterAdapter', () => {
   });
 
   it('creates file at specified path', async () => {
-    const tmp = `/tmp/lan-party-buddy-writer-path-test-${Date.now()}.yaml`;
+    const tmp = `/tmp/midi-mapper-writer-path-test-${Date.now()}.yaml`;
     const writer = new YamlConfigWriterAdapter();
 
     await writer.save(tmp, sampleConfig);

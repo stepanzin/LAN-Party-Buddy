@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'bun:test';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '../../src/domain/mapping-engine';
-import type { CompiledRules, CompiledMacros, CompiledRule } from '../../src/domain/mapping-rule';
-import type { MidiCC } from '../../src/domain/midi-message';
-import { mapValueClamped, mapValueExponential, mapValueSCurve, mapValueLogClamped } from '../../src/domain/value-curves';
-import { buildRules, buildMacros } from '../../src/app/rule-compiler';
-import { parseConfig } from '../../src/adapters/yaml-config.adapter';
-import type { AppConfig } from '../../src/domain/config';
+import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
+import type { CompiledRules, CompiledMacros, CompiledRule } from '@domain/mapping-rule';
+import type { MidiCC } from '@domain/midi-message';
+import { mapValueClamped, mapValueExponential, mapValueSCurve, mapValueLogClamped } from '@domain/value-curves';
+import { buildRules, buildMacros } from '@app/rule-compiler';
+import { parseConfig } from '@adapters/yaml-config.adapter';
+import type { AppConfig } from '@domain/config';
 
 // -------------------------------------------------------------------------
 // Bug #1: NaN propagation — clampMidi(NaN) returns NaN

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { Socket } from 'bun';
-import { decodePinResponse, encodePinChallenge, decodeMessage, extractFrames, type NetworkMessage } from '../../domain/network-protocol';
+import { decodePinResponse, encodePinChallenge, decodeMessage, extractFrames, type NetworkMessage } from '@domain/network-protocol';
 
 export class TcpClient extends EventEmitter {
   private socket: Socket<{}> | null = null;

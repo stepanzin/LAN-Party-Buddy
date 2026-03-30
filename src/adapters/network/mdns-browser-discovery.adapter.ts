@@ -1,5 +1,5 @@
 import { Bonjour, type RemoteService } from 'bonjour-service';
-import type { DeviceDiscoveryPort, MidiDevice } from '../../ports/device-discovery.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
 
 export class MdnsBrowserDiscoveryAdapter implements DeviceDiscoveryPort {
   private bonjour: Bonjour;
@@ -11,7 +11,7 @@ export class MdnsBrowserDiscoveryAdapter implements DeviceDiscoveryPort {
   }
 
   startBrowsing(): void {
-    this.browser = this.bonjour.find({ type: 'lan-party-buddy' });
+    this.browser = this.bonjour.find({ type: 'midi-mapper' });
     this.browser.on('up', (service: RemoteService) => {
       if (!this.services.some(s => s.name === service.name)) {
         this.services.push(service);

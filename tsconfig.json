@@ -15,6 +15,15 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    // Path aliases
+    "baseUrl": ".",
+    "paths": {
+      "@domain/*": ["src/domain/*"],
+      "@ports/*": ["src/ports/*"],
+      "@adapters/*": ["src/adapters/*"],
+      "@app/*": ["src/app/*"]
+    },
+
     // Best practices
     "strict": true,
     "skipLibCheck": true,

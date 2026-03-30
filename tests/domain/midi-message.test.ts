@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { MidiCC } from '../../src/domain/midi-message';
-import { parseMidiCC, isValidMidiCC, toRawMessage } from '../../src/domain/midi-message';
+import type { MidiCC } from '@domain/midi-message';
+import { parseMidiCC, isValidMidiCC, toRawMessage } from '@domain/midi-message';
 
 describe('parseMidiCC', () => {
   describe('valid MIDI CC messages', () => {

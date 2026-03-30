@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { Socket, TCPSocketListener } from 'bun';
-import { decodePinChallenge, encodePinResponse, decodeMessage, encodeHeartbeat, extractFrames, type NetworkMessage } from '../../domain/network-protocol';
+import { decodePinChallenge, encodePinResponse, decodeMessage, encodeHeartbeat, extractFrames, type NetworkMessage } from '@domain/network-protocol';
 
 type ClientState = {
   socket: Socket<{ id: string }>;

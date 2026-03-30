@@ -1,7 +1,7 @@
 import midi from '@julusian/midi';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../ports/midi-input.port';
-import { parseMidiCC } from '../../domain/midi-message';
-import { findExistingPortByName } from '../julusian-midi.adapter';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import { parseMidiCC } from '@domain/midi-message';
+import { findExistingPortByName } from '@adapters/julusian-midi.adapter';
 
 export class VirtualPortInputAdapter implements MidiInputPort {
   private input = new midi.Input();

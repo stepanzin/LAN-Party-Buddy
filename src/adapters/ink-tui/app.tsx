@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import { StoreContext, EditorContext } from './context';
 import type { TuiStore } from './tui-store';
-import type { ConfigEditorPort } from '../../ports/config-editor.port';
+import type { ConfigEditorPort } from '@ports/config-editor.port';
 import { useTuiStore } from './hooks/use-tui-store';
 import { MonitorTab } from './components/monitor-tab';
 import { EditorTab } from './components/editor-tab';
@@ -78,7 +78,7 @@ export function App({ store, configEditor }: Props) {
           {/* Header */}
           <Box borderStyle="round" paddingX={1} justifyContent="space-between">
             <Box>
-              <Text bold>LAN Party Buddy</Text>
+              <Text bold>MIDI Mapper</Text>
               <Text color="gray"> [{state.mode.toUpperCase()}]</Text>
               {state.device && (
                 <Text color="gray"> → {state.device}</Text>

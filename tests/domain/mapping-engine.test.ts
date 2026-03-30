@@ -4,9 +4,9 @@ import {
   processMidiMessage,
   INITIAL_ENGINE_STATE,
   type EngineState,
-} from '../../src/domain/mapping-engine.ts';
-import type { MidiCC } from '../../src/domain/midi-message.ts';
-import type { CompiledRules, CompiledMacros, CompiledRule } from '../../src/domain/mapping-rule.ts';
+} from '@domain/mapping-engine';
+import type { MidiCC } from '@domain/midi-message';
+import type { CompiledRules, CompiledMacros, CompiledRule } from '@domain/mapping-rule';
 
 // Helper to build a CompiledRule with defaults
 const rule = (

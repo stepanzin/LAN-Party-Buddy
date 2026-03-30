@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 import fc from 'fast-check';
-import { mapValueClamped, mapValueLogClamped, mapValueExponential, mapValueSCurve } from '../../src/domain/value-curves';
+import { mapValueClamped, mapValueLogClamped, mapValueExponential, mapValueSCurve } from '@domain/value-curves';
 
 // Arbitraries
 const midiValue = fc.integer({ min: 0, max: 127 });

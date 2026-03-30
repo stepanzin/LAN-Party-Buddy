@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, mock } from 'bun:test';
 import { render } from 'ink-testing-library';
-import { WelcomeScreen } from '../../src/adapters/ink-tui/components/welcome-screen';
+import { WelcomeScreen } from '@adapters/ink-tui/components/welcome-screen';
 
 const tick = () => new Promise(r => setTimeout(r, 30));
 

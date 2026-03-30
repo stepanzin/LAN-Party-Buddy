@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import { StoreContext } from '../context';
-import type { MidiDevice } from '../../../ports/device-discovery.port';
+import type { MidiDevice } from '@ports/device-discovery.port';
 
 export function DeviceSelector({ devices }: { devices: MidiDevice[] }) {
   const store = useContext(StoreContext);

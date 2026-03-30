@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
-import type { AppConfig } from '../../domain/config';
-import type { MidiDevice } from '../../ports/device-discovery.port';
+import type { AppConfig } from '@domain/config';
+import type { MidiDevice } from '@ports/device-discovery.port';
 
 export type ActivityEntry = {
   readonly cc: number;

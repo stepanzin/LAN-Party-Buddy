@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '../../../src/adapters/network/tcp-server';
-import { TcpClient } from '../../../src/adapters/network/tcp-client';
-import { encodeCC, encodeDisconnect } from '../../../src/domain/network-protocol';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { encodeCC, encodeDisconnect } from '@domain/network-protocol';
 
 const PORT_BASE = 19000; // avoid conflicts
 let port = PORT_BASE;

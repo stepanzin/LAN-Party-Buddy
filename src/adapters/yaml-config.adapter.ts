@@ -1,7 +1,7 @@
 import { parse as parseYaml, stringify as yamlStringify } from 'yaml';
-import type { ConfigReaderPort } from '../ports/config-reader.port';
-import type { ConfigWriterPort } from '../ports/config-writer.port';
-import type { AppConfig, Curve, MacroConfig, MacroOutput, NetworkConfig, RuleConfig } from '../domain/config';
+import type { ConfigReaderPort } from '@ports/config-reader.port';
+import type { ConfigWriterPort } from '@ports/config-writer.port';
+import type { AppConfig, Curve, MacroConfig, MacroOutput, NetworkConfig, RuleConfig } from '@domain/config';
 
 const VALID_CURVES: readonly Curve[] = ['linear', 'logarithmic', 'exponential', 's-curve'];
 const VALID_MODES = ['normal', 'toggle'] as const;

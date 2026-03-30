@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 import fc from 'fast-check';
-import { parseMidiCC, isValidMidiCC, toRawMessage } from '../../src/domain/midi-message';
+import { parseMidiCC, isValidMidiCC, toRawMessage } from '@domain/midi-message';
 
 const validChannel = fc.integer({ min: 0, max: 15 });
 const validCC = fc.integer({ min: 0, max: 127 });

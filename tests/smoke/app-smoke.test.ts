@@ -1,13 +1,13 @@
 import { describe, it, expect, mock } from 'bun:test';
-import { MidiMapperApp, type MidiMapperDeps } from '../../src/app/midi-mapper.app.ts';
-import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '../../src/ports/midi-input.port.ts';
-import type { MidiOutputPort } from '../../src/ports/midi-output.port.ts';
-import type { DeviceDiscoveryPort, MidiDevice } from '../../src/ports/device-discovery.port.ts';
-import type { UserInterfacePort } from '../../src/ports/user-interface.port.ts';
-import type { ConfigReaderPort } from '../../src/ports/config-reader.port.ts';
-import type { StateStorePort, AppState } from '../../src/ports/state-store.port.ts';
-import type { AppConfig } from '../../src/domain/config.ts';
-import { YamlConfigAdapter } from '../../src/adapters/yaml-config.adapter.ts';
+import { MidiMapperApp, type MidiMapperDeps } from '@app/midi-mapper.app';
+import type { MidiInputPort, MidiMessageHandler, MidiErrorHandler } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { DeviceDiscoveryPort, MidiDevice } from '@ports/device-discovery.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
+import type { ConfigReaderPort } from '@ports/config-reader.port';
+import type { StateStorePort, AppState } from '@ports/state-store.port';
+import type { AppConfig } from '@domain/config';
+import { YamlConfigAdapter } from '@adapters/yaml-config.adapter';
 import path from 'node:path';
 
 // --- Helpers ---

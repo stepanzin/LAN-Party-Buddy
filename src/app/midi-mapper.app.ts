@@ -1,20 +1,20 @@
-import type { MidiInputPort } from '../ports/midi-input.port.ts';
-import type { MidiOutputPort } from '../ports/midi-output.port.ts';
-import type { DeviceDiscoveryPort } from '../ports/device-discovery.port.ts';
-import type { UserInterfacePort } from '../ports/user-interface.port.ts';
-import type { ConfigReaderPort } from '../ports/config-reader.port.ts';
-import type { ConfigWriterPort } from '../ports/config-writer.port.ts';
-import type { StateStorePort } from '../ports/state-store.port.ts';
-import type { MonitorPort } from '../ports/monitor.port.ts';
-import type { ConfigEditorPort } from '../ports/config-editor.port.ts';
-import type { CompiledRules, CompiledMacros } from '../domain/mapping-rule.ts';
-import type { AppConfig } from '../domain/config.ts';
-import { buildRules, buildMacros } from './rule-compiler.ts';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '../domain/mapping-engine.ts';
-import type { MidiCC } from '../domain/midi-message.ts';
+import type { MidiInputPort } from '@ports/midi-input.port';
+import type { MidiOutputPort } from '@ports/midi-output.port';
+import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
+import type { ConfigReaderPort } from '@ports/config-reader.port';
+import type { ConfigWriterPort } from '@ports/config-writer.port';
+import type { StateStorePort } from '@ports/state-store.port';
+import type { MonitorPort } from '@ports/monitor.port';
+import type { ConfigEditorPort } from '@ports/config-editor.port';
+import type { CompiledRules, CompiledMacros } from '@domain/mapping-rule';
+import type { AppConfig } from '@domain/config';
+import { buildRules, buildMacros } from './rule-compiler';
+import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
+import type { MidiCC } from '@domain/midi-message';
 
 const DEFAULT_CONFIG: AppConfig = {
-  deviceName: 'LAN Party Buddy Output',
+  deviceName: 'MIDI Mapper Output',
   rules: [],
 };
 

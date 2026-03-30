@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { join } from 'node:path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir, homedir } from 'node:os';
-import { JsonStateAdapter } from '../../src/adapters/json-state.adapter';
+import { JsonStateAdapter } from '@adapters/json-state.adapter';
 
 let tmpDir: string;
 
 beforeEach(async () => {
-  tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-state-'));
+  tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-state-'));
 });
 
 afterEach(async () => {

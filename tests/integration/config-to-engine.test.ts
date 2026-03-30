@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'bun:test';
 import { resolve } from 'node:path';
 
-import { YamlConfigAdapter, parseConfig } from '../../src/adapters/yaml-config.adapter';
-import { buildRules, buildMacros } from '../../src/app/rule-compiler';
-import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '../../src/domain/mapping-engine';
-import type { MidiCC } from '../../src/domain/midi-message';
-import type { AppConfig } from '../../src/domain/config';
+import { YamlConfigAdapter, parseConfig } from '@adapters/yaml-config.adapter';
+import { buildRules, buildMacros } from '@app/rule-compiler';
+import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '@domain/mapping-engine';
+import type { MidiCC } from '@domain/midi-message';
+import type { AppConfig } from '@domain/config';
 
 const CONFIG_PATH = resolve(import.meta.dir, '../../config.yaml');
 

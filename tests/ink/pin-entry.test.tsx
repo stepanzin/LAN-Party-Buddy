@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, mock } from 'bun:test';
 import { render } from 'ink-testing-library';
-import { PinEntry } from '../../src/adapters/ink-tui/components/pin-entry';
+import { PinEntry } from '@adapters/ink-tui/components/pin-entry';
 
 const tick = () => new Promise(r => setTimeout(r, 30));
 

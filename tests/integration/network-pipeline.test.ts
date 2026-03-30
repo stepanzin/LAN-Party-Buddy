@@ -1,13 +1,13 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { TcpServer } from '../../src/adapters/network/tcp-server';
-import { TcpClient } from '../../src/adapters/network/tcp-client';
-import { TcpBroadcastOutputAdapter } from '../../src/adapters/network/tcp-broadcast-output.adapter';
-import { TcpClientInputAdapter } from '../../src/adapters/network/tcp-client-input.adapter';
-import { MdnsBrowserDiscoveryAdapter } from '../../src/adapters/network/mdns-browser-discovery.adapter';
-import { processMidiMessage, INITIAL_ENGINE_STATE } from '../../src/domain/mapping-engine';
-import { buildRules } from '../../src/app/rule-compiler';
-import type { MidiCC } from '../../src/domain/midi-message';
-import type { AppConfig } from '../../src/domain/config';
+import { TcpServer } from '@adapters/network/tcp-server';
+import { TcpClient } from '@adapters/network/tcp-client';
+import { TcpBroadcastOutputAdapter } from '@adapters/network/tcp-broadcast-output.adapter';
+import { TcpClientInputAdapter } from '@adapters/network/tcp-client-input.adapter';
+import { MdnsBrowserDiscoveryAdapter } from '@adapters/network/mdns-browser-discovery.adapter';
+import { processMidiMessage, INITIAL_ENGINE_STATE } from '@domain/mapping-engine';
+import { buildRules } from '@app/rule-compiler';
+import type { MidiCC } from '@domain/midi-message';
+import type { AppConfig } from '@domain/config';
 import { EventEmitter } from 'node:events';
 
 // Use ports from 19400

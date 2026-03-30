@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect } from 'bun:test';
 import { render } from 'ink-testing-library';
-import { App } from '../../src/adapters/ink-tui/app';
-import { TuiStore } from '../../src/adapters/ink-tui/tui-store';
-import type { AppConfig } from '../../src/domain/config';
+import { App } from '@adapters/ink-tui/app';
+import { TuiStore } from '@adapters/ink-tui/tui-store';
+import type { AppConfig } from '@domain/config';
 
 const TEST_CONFIG: AppConfig = {
   deviceName: 'Test Output',

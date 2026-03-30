@@ -13,7 +13,7 @@ import {
   encodePinResponse,
   decodePinResponse,
   extractFrames,
-} from '../../src/domain/network-protocol';
+} from '@domain/network-protocol';
 
 // ---------------------------------------------------------------------------
 // encodeCC
