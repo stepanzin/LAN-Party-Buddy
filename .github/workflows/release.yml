@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    name: Build (${{ matrix.artifact }})
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: lan-party-buddy-linux-x64
+            binary: lan-party-buddy
+          - os: ubuntu-24.04-arm
+            artifact: lan-party-buddy-linux-arm64
+            binary: lan-party-buddy
+          - os: macos-latest
+            artifact: lan-party-buddy-darwin-arm64
+            binary: lan-party-buddy
+          - os: macos-13
+            artifact: lan-party-buddy-darwin-x64
+            binary: lan-party-buddy
+          - os: windows-latest
+            artifact: lan-party-buddy-windows-x64
+            binary: lan-party-buddy.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun test --timeout 30000
+      - run: bun run compile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/${{ matrix.binary }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Rename binaries
+        run: |
+          for dir in artifacts/lan-party-buddy-*/; do
+            name=$(basename "$dir")
+            if [ -f "$dir/lan-party-buddy.exe" ]; then
+              mv "$dir/lan-party-buddy.exe" "artifacts/$name.exe"
+            else
+              mv "$dir/lan-party-buddy" "artifacts/$name"
+            fi
+            rm -rf "$dir"
+          done
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/lan-party-buddy-linux-x64
+            artifacts/lan-party-buddy-linux-arm64
+            artifacts/lan-party-buddy-darwin-arm64
+            artifacts/lan-party-buddy-darwin-x64
+            artifacts/lan-party-buddy-windows-x64.exe
+          generate_release_notes: true
