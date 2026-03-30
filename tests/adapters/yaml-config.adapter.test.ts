@@ -10,6 +10,7 @@ import { parse as parseYaml } from 'yaml';
 describe('parseConfig', () => {
   const validYaml = `
 deviceName: "Test Output"
+mode: local
 rules:
   - cc: 4
     label: "Left Pedal"
@@ -22,6 +23,7 @@ rules:
 
   const twoRulesYaml = `
 deviceName: "Test Output"
+mode: local
 rules:
   - cc: 4
     label: "Left Pedal"
@@ -64,6 +66,7 @@ rules:
     it('accepts cc: 0 as valid', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 0
     label: "Bank Select"
@@ -80,6 +83,7 @@ rules:
     it('accepts outputMin > outputMax (inverse range)', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "Inverted"
@@ -94,9 +98,58 @@ rules:
       expect(config.rules[0]!.outputMax).toBe(0);
     });
 
+    it('accepts empty rules array (first-run default config)', () => {
+      const yaml = `
+deviceName: "LAN Party Buddy Output"
+mode: local
+rules: []
+`;
+      const config = parseConfig(yaml);
+      expect(config.deviceName).toBe('LAN Party Buddy Output');
+      expect(config.mode).toBe('local');
+      expect(config.rules).toHaveLength(0);
+    });
+
+    it('parses mode field (local, host, join)', () => {
+      for (const m of ['local', 'host', 'join'] as const) {
+        const yaml = `
+deviceName: "Out"
+mode: ${m}
+rules:
+  - cc: 1
+    label: "X"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+`;
+        const config = parseConfig(yaml);
+        expect(config.mode).toBe(m);
+      }
+    });
+
+    it('rejects invalid mode value', () => {
+      const yaml = `
+deviceName: "Out"
+mode: bridge
+rules: []
+`;
+      expect(() => parseConfig(yaml)).toThrow(/mode/);
+    });
+
+    it('requires mode field', () => {
+      const yaml = `
+deviceName: "Out"
+rules: []
+`;
+      expect(() => parseConfig(yaml)).toThrow(/mode/);
+    });
+
     it('accepts new optional fields (smoothing, invert, mode, deadZoneMin, deadZoneMax)', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "Full"
@@ -124,6 +177,7 @@ rules:
     it('accepts exponential curve', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "Exp"
@@ -140,6 +194,7 @@ rules:
     it('accepts s-curve', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "SCurve"
@@ -156,6 +211,7 @@ rules:
     it('accepts config with macros section', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -265,20 +321,13 @@ rules:
 
   describe('invalid rules', () => {
     it('throws when rules is missing', () => {
-      expect(() => parseConfig('deviceName: "Out"')).toThrow(/rules/);
-    });
-
-    it('throws when rules is empty array', () => {
-      const yaml = `
-deviceName: "Out"
-rules: []
-`;
-      expect(() => parseConfig(yaml)).toThrow(/rules/);
+      expect(() => parseConfig('deviceName: "Out"\nmode: local')).toThrow(/rules/);
     });
 
     it('throws when rules is not an array', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules: "not an array"
 `;
       expect(() => parseConfig(yaml)).toThrow(/rules/);
@@ -289,6 +338,7 @@ rules: "not an array"
     it('throws when a rule is a scalar instead of object', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - "just a string"
 `;
@@ -298,6 +348,7 @@ rules:
     it('throws when a rule is null', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - null
 `;
@@ -308,6 +359,7 @@ rules:
   describe('invalid rule fields', () => {
     const makeYaml = (ruleOverride: string) => `
 deviceName: "Out"
+mode: local
 rules:
   - ${ruleOverride}
 `;
@@ -491,6 +543,7 @@ rules:
     it('includes rule index in error for second rule', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "OK"
@@ -514,6 +567,7 @@ rules:
   describe('invalid new optional fields', () => {
     const makeYaml = (extra: string) => `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -566,6 +620,7 @@ rules:
     it('parses config with full network section', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -589,6 +644,7 @@ network:
     it('parses config with partial network section (port only)', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -610,6 +666,7 @@ network:
     it('parses config without network section (backward compat)', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -627,6 +684,7 @@ rules:
   describe('invalid network section', () => {
     const makeNetworkYaml = (networkSection: string) => `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -674,6 +732,7 @@ network:
     it('throws when network is not an object', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -691,6 +750,7 @@ network: "not an object"
   describe('invalid macros', () => {
     const baseMacroYaml = (macroSection: string) => `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -706,6 +766,7 @@ ${macroSection}
     it('throws when macros is not an array', () => {
       const yaml = `
 deviceName: "Out"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -944,6 +1005,7 @@ describe('YamlConfigAdapter', () => {
         tmp,
         `
 deviceName: "File Test"
+mode: local
 rules:
   - cc: 1
     label: "Mod Wheel"
@@ -982,6 +1044,7 @@ rules:
 describe('YamlConfigWriterAdapter', () => {
   const sampleConfig: AppConfig = {
     deviceName: 'Writer Test',
+    mode: 'local',
     rules: [
       {
         cc: 1,

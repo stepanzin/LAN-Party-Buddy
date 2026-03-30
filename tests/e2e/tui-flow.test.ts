@@ -23,6 +23,7 @@ const DEVICES: MidiDevice[] = [
 
 const TEST_CONFIG_YAML = `
 deviceName: "Test TUI Output"
+mode: local
 rules:
   - cc: 4
     label: "Expression"
@@ -180,7 +181,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     expect(store.getState().systemMessage).toBe('No MIDI input devices found. Connect a device and try again.');
   });
@@ -191,7 +192,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Store is still functional after app exits
     store.setTab('editor');
@@ -210,7 +211,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 80 });
 
     const state = store.getState();
@@ -227,7 +228,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
     mockInput.simulateMessage({ channel: 0, cc: 99, value: 42 });
 
     const state = store.getState();
@@ -241,7 +242,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
     mockInput.simulateMessage({ channel: 0, cc: 1, value: 100 });
 
     const state = store.getState();
@@ -256,7 +257,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     expect(store.getState().device).toBe('Controller A');
   });
@@ -267,7 +268,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [true, false], // connected, then disconnect
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // After disconnect, connected should be false
     expect(store.getState().connected).toBe(false);
@@ -283,7 +284,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 64 });
 
     const logs = store.getState().logEntries;
@@ -299,7 +300,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
     mockInput.simulateMessage({ channel: 0, cc: 55, value: 10 });
 
     const logs = store.getState().logEntries;
@@ -317,7 +318,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Start MIDI learn
     const learnPromise = editorService.startMidiLearn();
@@ -348,7 +349,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // CC 4 currently maps linear 0-127 → 0-127
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 100 });
@@ -374,7 +375,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     const configBefore = store.getState().config;
     expect(configBefore?.rules[0]?.label).toBe('Expression');
@@ -397,7 +398,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Modify and save
     const rule = editorService.getConfig().rules[0]!;
@@ -428,7 +429,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       }
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     expect(store.getState().device).toBe('Controller B');
   });
@@ -443,7 +444,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     for (let i = 0; i < 10; i++) {
       mockInput.simulateMessage({ channel: 0, cc: 4, value: i * 12 });

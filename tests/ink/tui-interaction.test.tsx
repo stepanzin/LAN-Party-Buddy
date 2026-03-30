@@ -103,7 +103,7 @@ describe('TUI Interaction: ink-testing-library', () => {
       stdin.write('4');
       await tick();
       expect(lastFrame()).toContain('[4] Settings');
-      expect(lastFrame()).toContain('Virtual MIDI Port');
+      expect(lastFrame()).toContain('Mode:');
       unmount();
     });
   });

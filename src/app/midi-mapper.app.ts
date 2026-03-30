@@ -13,11 +13,6 @@ import type { StateStorePort } from '@ports/state-store.port';
 import type { UserInterfacePort } from '@ports/user-interface.port';
 import { buildMacros, buildRules } from './rule-compiler';
 
-const DEFAULT_CONFIG: AppConfig = {
-  deviceName: 'MIDI Mapper Output',
-  rules: [],
-};
-
 export type MidiMapperDeps = {
   readonly midiInput: MidiInputPort;
   readonly midiOutput: MidiOutputPort;
@@ -51,12 +46,7 @@ export class MidiMapperApp {
     this.configEditorService = service;
   }
 
-  async run(configPath: string, configExists: boolean): Promise<void> {
-    // First-run: create default config (mode already selected in bootstrap)
-    if (!configExists) {
-      await this.deps.configWriter.save(configPath, DEFAULT_CONFIG);
-    }
-
+  async run(configPath: string): Promise<void> {
     const config = await this.deps.configReader.load(configPath);
     this.currentConfig = config;
     let rules = buildRules(config);

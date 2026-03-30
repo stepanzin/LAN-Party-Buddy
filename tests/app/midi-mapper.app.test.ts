@@ -14,6 +14,7 @@ import type { UserInterfacePort } from '@ports/user-interface.port';
 
 const TEST_CONFIG: AppConfig = {
   deviceName: 'VirtualOut',
+  mode: 'local',
   rules: [
     { cc: 10, label: 'Volume', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
   ],
@@ -176,7 +177,7 @@ describe('MidiMapperApp', () => {
 
       const { deps } = createDeps({ deviceDiscovery, stateStore, midiInput, midiOutput, ui });
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // After wiring, simulate a message. CC 10 has a rule in TEST_CONFIG.
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -195,7 +196,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.showError).toHaveBeenCalledWith('No MIDI input devices found. Connect a device and try again.');
     });
@@ -212,7 +213,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(midiInput.input.open).toHaveBeenCalledWith(0);
       // selectDevice should NOT have been called
@@ -227,7 +228,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.showInfo).toHaveBeenCalledWith('Auto-connecting to last device: Controller A');
     });
@@ -240,7 +241,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.selectDevice).toHaveBeenCalledWith(DEVICES);
     });
@@ -253,7 +254,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.showInfo).toHaveBeenCalledWith('Last device "NonExistent Device" not found.');
     });
@@ -266,7 +267,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.selectDevice).toHaveBeenCalledWith(DEVICES);
     });
@@ -283,7 +284,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(midiInput.input.open).toHaveBeenCalledWith(1);
     });
@@ -295,7 +296,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiOutput, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(midiOutput.openVirtual).toHaveBeenCalledWith('VirtualOut');
     });
@@ -308,7 +309,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, stateStore, ui, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(stateStore.save).toHaveBeenCalledWith({ lastDevice: 'Controller B' });
     });
@@ -320,7 +321,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, ui, midiInput });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.showInfo).toHaveBeenCalledWith('Proxying MIDI signals -> VirtualOut\nDevice: Controller A');
     });
@@ -337,7 +338,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // onMessage should have been called (handler wired)
       expect(midiInput.input.onMessage).toHaveBeenCalled();
@@ -357,7 +358,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // CC 10 has a rule, so processMidiMessage returns NRPN + mapped message
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -373,7 +374,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
 
@@ -388,7 +389,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // CC 20 has no rule -> prevCode becomes 20
       midiInput.simulateMessage({ channel: 0, cc: 20, value: 100 });
@@ -412,7 +413,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(midiInput.input.onError).toHaveBeenCalled();
 
@@ -434,7 +435,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // isDeviceConnected should have been called multiple times
       expect(deviceDiscovery.isDeviceConnected).toHaveBeenCalled();
@@ -452,7 +453,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(ui.showWarning).toHaveBeenCalledWith('Device "Controller A" disconnected.');
     });
@@ -465,7 +466,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(midiInput.input.close).toHaveBeenCalled();
       expect(midiOutput.close).toHaveBeenCalled();
@@ -483,7 +484,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // listDevices called twice: first iteration + second iteration
       const listCalls = (deviceDiscovery.listDevices as ReturnType<typeof mock>).mock.calls.length;
@@ -504,7 +505,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // CC 10 has a rule in TEST_CONFIG with label 'Volume'
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -519,7 +520,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // CC 99 has no rule in TEST_CONFIG
       midiInput.simulateMessage({ channel: 0, cc: 99, value: 50 });
@@ -531,6 +532,7 @@ describe('MidiMapperApp', () => {
     it('calls monitor.onMacroActivity when macros fire', async () => {
       const macroConfig: AppConfig = {
         deviceName: 'VirtualOut',
+        mode: 'local',
         rules: [
           {
             cc: 10,
@@ -557,7 +559,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor, configReader });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
 
@@ -574,7 +576,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(monitor.setDevice).toHaveBeenCalledWith('Controller A');
     });
@@ -589,7 +591,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       expect(monitor.setConnectionStatus).toHaveBeenCalledWith(false);
     });
@@ -603,7 +605,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, midiOutput, ui });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // Should still process messages normally
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -618,7 +620,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // CC 10 has a rule but no macros in TEST_CONFIG
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -633,7 +635,7 @@ describe('MidiMapperApp', () => {
       const { deps } = createDeps({ deviceDiscovery, midiInput, monitor });
 
       const app = new MidiMapperApp(deps, 10);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // CC 99 has no rule - onUnmappedCC should be called (no label needed)
       midiInput.simulateMessage({ channel: 0, cc: 99, value: 50 });
@@ -658,7 +660,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       midiInput.simulateMessage({ channel: 0, cc: 42, value: 100 });
 
@@ -680,7 +682,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
 
@@ -704,7 +706,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // First message: intercepted by MIDI learn
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -738,7 +740,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // The app should have registered onConfigChanged
       expect(mockService.onConfigChanged).toBeFunction();
@@ -752,6 +754,7 @@ describe('MidiMapperApp', () => {
       // Now fire hot-reload with a new config where CC 10 has outputMin=0, outputMax=50
       const newConfig: AppConfig = {
         deviceName: 'VirtualOut',
+        mode: 'local',
         rules: [
           {
             cc: 10,
@@ -784,7 +787,7 @@ describe('MidiMapperApp', () => {
       // No configEditorService set
       const app = new MidiMapperApp(deps, 10);
       // Should not throw
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // Just verify normal operation works
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -805,7 +808,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // Original config has no macros, send CC 10
       midiInput.simulateMessage({ channel: 0, cc: 10, value: 64 });
@@ -814,6 +817,7 @@ describe('MidiMapperApp', () => {
       // Hot-reload with macros
       const newConfig: AppConfig = {
         deviceName: 'VirtualOut',
+        mode: 'local',
         rules: [
           {
             cc: 10,
@@ -866,7 +870,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // After disconnect, cancelMidiLearn should have been called
       expect(cancelMidiLearn).toHaveBeenCalled();
@@ -891,7 +895,7 @@ describe('MidiMapperApp', () => {
 
       const app = new MidiMapperApp(deps, 10);
       app.setConfigEditorService(mockService);
-      await app.run('config.yaml', true);
+      await app.run('config.yaml');
 
       // cancelMidiLearn should NOT have been called since learn was not active
       expect(cancelMidiLearn).not.toHaveBeenCalled();

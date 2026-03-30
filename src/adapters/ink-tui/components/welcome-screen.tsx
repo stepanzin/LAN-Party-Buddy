@@ -8,10 +8,10 @@ import calvinSPath from '../calvin-s.flf' with { type: 'file' };
 const calvinSFont = await Bun.file(calvinSPath).text();
 figlet.parseFont('Calvin S', calvinSFont);
 
-import type { WelcomeChoice } from '@ports/user-interface.port';
+import type { AppMode } from '@domain/config';
 
 type Props = {
-  onSelect: (choice: WelcomeChoice) => void;
+  onSelect: (choice: AppMode) => void;
 };
 
 const ASCII_TITLE = figlet.textSync('MIDI Mapper', { font: 'Calvin S' });

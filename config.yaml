@@ -1,4 +1,5 @@
 deviceName: "LAN Party Buddy Output"
+mode: local
 
 rules:
   - cc: 4

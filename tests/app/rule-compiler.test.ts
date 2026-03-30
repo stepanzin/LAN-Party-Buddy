@@ -10,6 +10,7 @@ describe('buildRules', () => {
   it('builds a rules record from config with linear curve', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 4,
@@ -33,6 +34,7 @@ describe('buildRules', () => {
   it('linear rule maps values using mapValueClamped + round', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 4,
@@ -62,6 +64,7 @@ describe('buildRules', () => {
   it('logarithmic rule maps values using mapValueLogClamped + round', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 11,
@@ -87,6 +90,7 @@ describe('buildRules', () => {
   it('exponential rule maps values using mapValueExponential + round', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 7,
@@ -111,6 +115,7 @@ describe('buildRules', () => {
   it('s-curve rule maps values using mapValueSCurve + round', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 8,
@@ -135,6 +140,7 @@ describe('buildRules', () => {
   it('builds multiple rules keyed by cc number', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 4,
@@ -164,13 +170,14 @@ describe('buildRules', () => {
   });
 
   it('returns empty record for config with empty rules', () => {
-    const rules = buildRules({ deviceName: 'X', rules: [] });
+    const rules = buildRules({ deviceName: 'X', mode: 'local', rules: [] });
     expect(Object.keys(rules)).toHaveLength(0);
   });
 
   it('invert: true swaps outputMin and outputMax', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 1,
@@ -196,6 +203,7 @@ describe('buildRules', () => {
   it('deadZoneMin/deadZoneMax override inputMin/inputMax for curve mapping', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 2,
@@ -227,6 +235,7 @@ describe('buildRules', () => {
   it('smoothing and mode metadata are carried through', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 3,
@@ -253,6 +262,7 @@ describe('buildRules', () => {
   it('defaults smoothing to 0 and mode to normal when not specified', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 6,
@@ -274,6 +284,7 @@ describe('buildRules', () => {
   it('CompiledRule has transform, smoothing, mode fields', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 10,
@@ -306,6 +317,7 @@ describe('buildMacros', () => {
   it('returns empty record when no macros in config', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [
         {
           cc: 1,
@@ -325,6 +337,7 @@ describe('buildMacros', () => {
   it('builds macro with single output', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [],
       macros: [
         {
@@ -357,6 +370,7 @@ describe('buildMacros', () => {
   it('builds macro with multiple outputs', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [],
       macros: [
         {
@@ -400,6 +414,7 @@ describe('buildMacros', () => {
   it('builds macro with invert on one output', () => {
     const config: AppConfig = {
       deviceName: 'Out',
+      mode: 'local',
       rules: [],
       macros: [
         {

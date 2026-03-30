@@ -37,8 +37,11 @@ export type NetworkConfig = {
   readonly hostName?: string; // mDNS advertised name
 };
 
+export type AppMode = 'local' | 'host' | 'join';
+
 export type AppConfig = {
   readonly deviceName: string;
+  readonly mode: AppMode;
   readonly rules: readonly RuleConfig[];
   readonly macros?: readonly MacroConfig[];
   readonly network?: NetworkConfig;

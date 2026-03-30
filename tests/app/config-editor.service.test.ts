@@ -21,6 +21,7 @@ const makeMacro = (input: number, label = `Macro${input}`): MacroConfig => ({
 
 const makeConfig = (overrides?: Partial<AppConfig>): AppConfig => ({
   deviceName: 'Test Device',
+  mode: 'local',
   rules: [makeRule(1), makeRule(2)],
   ...overrides,
 });

@@ -61,6 +61,7 @@ describe('BUG: Inverted input range (inputMin > inputMax)', () => {
   it('buildRules with deadZoneMin > deadZoneMax should handle gracefully', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 1,
@@ -190,6 +191,7 @@ describe('Edge: Degenerate output ranges', () => {
   it('outputMin === outputMax produces constant output', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 1,
@@ -211,6 +213,7 @@ describe('Edge: Degenerate output ranges', () => {
   it('outputMin === outputMax with invert still produces constant', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 1,
@@ -237,6 +240,7 @@ describe('Edge: Duplicate CC numbers in config', () => {
   it('last rule wins when two rules have same CC', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         { cc: 1, label: 'First', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 64, curve: 'linear' },
         { cc: 1, label: 'Second', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' },
@@ -281,6 +285,7 @@ describe('Edge: Config validation', () => {
   it('smoothing: 0 is valid (means disabled)', () => {
     const yaml = `
 deviceName: "Test"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -298,6 +303,7 @@ rules:
   it('macros with empty outputs array should be rejected', () => {
     const yaml = `
 deviceName: "Test"
+mode: local
 rules:
   - cc: 1
     label: "X"
@@ -317,6 +323,7 @@ macros:
   it('macro input CC same as rule CC is valid (both should work)', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [{ cc: 1, label: 'Rule', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' }],
       macros: [
         {

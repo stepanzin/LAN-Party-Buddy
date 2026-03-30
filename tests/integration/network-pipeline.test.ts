@@ -63,6 +63,7 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
 
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 10,
@@ -109,6 +110,7 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
 
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 11,
@@ -159,6 +161,7 @@ describe('Integration: Network Pipeline (adapters only, no MidiMapperApp)', () =
 
     const yaml = `
 deviceName: "Test"
+mode: local
 rules:
   - cc: 1
     label: "X"

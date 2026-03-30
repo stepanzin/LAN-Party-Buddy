@@ -211,18 +211,20 @@ export function parseConfig(yamlContent: string): AppConfig {
     throw new Error('deviceName must be a non-empty string');
   }
 
-  if (!Array.isArray(obj.rules)) {
-    throw new Error('rules must be an array');
+  const VALID_APP_MODES = ['local', 'host', 'join'];
+  if (typeof obj.mode !== 'string' || !VALID_APP_MODES.includes(obj.mode)) {
+    throw new Error('mode must be one of: local, host, join');
   }
 
-  if (obj.rules.length === 0) {
-    throw new Error('rules must not be empty');
+  if (!Array.isArray(obj.rules)) {
+    throw new Error('rules must be an array');
   }
 
   const rules = obj.rules.map((raw: unknown, i: number) => validateRule(raw, i));
 
   const result: AppConfig = {
     deviceName: obj.deviceName,
+    mode: obj.mode as AppConfig['mode'],
     rules,
   };
 

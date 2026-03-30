@@ -20,16 +20,15 @@ import { VirtualPortInputAdapter } from '@adapters/network/virtual-port-input.ad
 import { YamlConfigAdapter, YamlConfigWriterAdapter } from '@adapters/yaml-config.adapter';
 import { ConfigEditorService } from '@app/config-editor.service';
 import { MidiMapperApp } from '@app/midi-mapper.app';
+import type { AppMode } from '@domain/config';
 import type { DeviceDiscoveryPort } from '@ports/device-discovery.port';
 import type { MidiInputPort } from '@ports/midi-input.port';
 import type { MidiOutputPort } from '@ports/midi-output.port';
-import type { WelcomeChoice } from '@ports/user-interface.port';
 
 const { values: args } = parseArgs({
   args: Bun.argv.slice(2),
   options: {
     config: { type: 'string', short: 'c' },
-    mode: { type: 'string', short: 'm' },
   },
 });
 
@@ -47,30 +46,28 @@ function findConfigPath(explicit?: string): { path: string; exists: boolean } {
 const { path: configPath, exists: configExists } = findConfigPath(args.config);
 const configWriter = new YamlConfigWriterAdapter();
 const store = new TuiStore();
-const editorService = new ConfigEditorService({ deviceName: 'MIDI Mapper Output', rules: [] }, configWriter);
-editorService.onConfigChanged = (c) => store.setConfig(c);
-const tuiAdapter = new InkTuiAdapter(store, editorService);
+const tuiAdapter = new InkTuiAdapter(store);
 
-// Load state to check for saved mode
-const stateStore = new JsonStateAdapter();
-const savedState = await stateStore.load();
-
-// Determine mode: CLI arg > saved mode > welcome screen > local default
-let mode: WelcomeChoice;
-if (args.mode && ['local', 'host', 'join'].includes(args.mode)) {
-  mode = args.mode as WelcomeChoice;
-} else if (savedState.lastMode) {
-  mode = savedState.lastMode;
-} else if (!configExists) {
-  mode = await tuiAdapter.showWelcome();
-} else {
-  mode = 'local'; // default for existing config
+// If config doesn't exist, show welcome screen to pick mode, then create config
+if (!configExists) {
+  const selectedMode: AppMode = await tuiAdapter.showWelcome();
+  await configWriter.save(configPath, { deviceName: 'LAN Party Buddy Output', mode: selectedMode, rules: [] });
 }
 
-// Save selected mode to state
-await stateStore.save({ ...savedState, lastMode: mode });
+// Load config (always exists now)
+const configReader = new YamlConfigAdapter();
+const config = await configReader.load(configPath);
 
+const mode = config.mode;
+
+store.setConfig(config);
 store.setMode(mode);
+
+const editorService = new ConfigEditorService(config, configWriter);
+editorService.onConfigChanged = (c) => store.setConfig(c);
+
+// Re-create tuiAdapter with configEditor
+const tuiAdapterFull = new InkTuiAdapter(store, editorService);
 
 // Wire adapters based on mode
 let midiInput: MidiInputPort;
@@ -131,16 +128,18 @@ if (mode === 'host') {
   deviceDiscovery = new JulusianDeviceDiscoveryAdapter();
 }
 
+const stateStore = new JsonStateAdapter();
+
 const app = new MidiMapperApp(
   {
     midiInput,
     midiOutput,
     deviceDiscovery,
-    ui: tuiAdapter,
-    configReader: new YamlConfigAdapter(),
+    ui: tuiAdapterFull,
+    configReader,
     configWriter,
-    stateStore: new JsonStateAdapter(),
-    monitor: tuiAdapter,
+    stateStore,
+    monitor: tuiAdapterFull,
     configEditor: editorService,
   },
   2000,
@@ -150,15 +149,15 @@ app.setConfigEditorService(editorService);
 
 process.on('SIGINT', () => {
   cleanupNetwork();
-  tuiAdapter.stop();
+  tuiAdapterFull.stop();
   process.exit(0);
 });
 process.on('SIGTERM', () => {
   cleanupNetwork();
-  tuiAdapter.stop();
+  tuiAdapterFull.stop();
   process.exit(0);
 });
 
-app.run(configPath, configExists);
-await tuiAdapter.waitForExit();
+app.run(configPath);
+await tuiAdapterFull.waitForExit();
 cleanupNetwork();

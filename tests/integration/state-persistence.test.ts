@@ -110,25 +110,6 @@ describe('Integration: State Persistence', () => {
     expect(loaded.lastDevice).toBe('Nested Device');
   });
 
-  it('mode persists across save/load cycle', async () => {
-    const filePath = join(tmpDir, 'state.json');
-    const adapter = new JsonStateAdapter(filePath);
-
-    // Save state with mode
-    await adapter.save({ lastDevice: 'Arturia KeyStep', lastMode: 'host' });
-    const loaded = await adapter.load();
-
-    expect(loaded.lastDevice).toBe('Arturia KeyStep');
-    expect(loaded.lastMode).toBe('host');
-
-    // Update mode only
-    await adapter.save({ ...loaded, lastMode: 'join' });
-    const reloaded = await adapter.load();
-
-    expect(reloaded.lastDevice).toBe('Arturia KeyStep');
-    expect(reloaded.lastMode).toBe('join');
-  });
-
   it('round-trips state without lastDevice as empty object', async () => {
     const filePath = join(tmpDir, 'state.json');
     const adapter = new JsonStateAdapter(filePath);

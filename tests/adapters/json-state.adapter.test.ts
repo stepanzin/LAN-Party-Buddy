@@ -84,62 +84,13 @@ describe('JsonStateAdapter', () => {
       expect(state).toEqual({});
     });
 
-    it('reads saved lastMode', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      await Bun.write(filePath, JSON.stringify({ lastMode: 'host' }));
-      const adapter = new JsonStateAdapter(filePath);
-      const state = await adapter.load();
-      expect(state.lastMode).toBe('host');
-    });
-
-    it('reads saved lastMode "join"', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      await Bun.write(filePath, JSON.stringify({ lastMode: 'join' }));
-      const adapter = new JsonStateAdapter(filePath);
-      const state = await adapter.load();
-      expect(state.lastMode).toBe('join');
-    });
-
-    it('reads saved lastMode "local"', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      await Bun.write(filePath, JSON.stringify({ lastMode: 'local' }));
-      const adapter = new JsonStateAdapter(filePath);
-      const state = await adapter.load();
-      expect(state.lastMode).toBe('local');
-    });
-
-    it('ignores invalid lastMode values', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      await Bun.write(filePath, JSON.stringify({ lastMode: 'invalid' }));
-      const adapter = new JsonStateAdapter(filePath);
-      const state = await adapter.load();
-      expect(state.lastMode).toBeUndefined();
-    });
-
-    it('ignores lastMode when it is not a string', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      await Bun.write(filePath, JSON.stringify({ lastMode: 42 }));
-      const adapter = new JsonStateAdapter(filePath);
-      const state = await adapter.load();
-      expect(state.lastMode).toBeUndefined();
-    });
-
-    it('lastMode is optional (backward compat with existing state files)', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      await Bun.write(filePath, JSON.stringify({ lastDevice: 'MyDevice' }));
-      const adapter = new JsonStateAdapter(filePath);
-      const state = await adapter.load();
-      expect(state.lastDevice).toBe('MyDevice');
-      expect(state.lastMode).toBeUndefined();
-    });
-
-    it('reads both lastDevice and lastMode', async () => {
+    it('ignores lastMode field (removed, mode is in config now)', async () => {
       const filePath = join(tmpDir, 'state.json');
       await Bun.write(filePath, JSON.stringify({ lastDevice: 'MyDevice', lastMode: 'host' }));
       const adapter = new JsonStateAdapter(filePath);
       const state = await adapter.load();
       expect(state.lastDevice).toBe('MyDevice');
-      expect(state.lastMode).toBe('host');
+      expect((state as any).lastMode).toBeUndefined();
     });
 
     it('returns default state when file contains an array', async () => {
@@ -185,28 +136,12 @@ describe('JsonStateAdapter', () => {
       expect(JSON.parse(raw)).toEqual({});
     });
 
-    it('saves lastMode to file', async () => {
+    it('ignores unknown fields during save (only saves lastDevice)', async () => {
       const filePath = join(tmpDir, 'state.json');
       const adapter = new JsonStateAdapter(filePath);
-      await adapter.save({ lastMode: 'host' });
+      await adapter.save({ lastDevice: 'Controller' });
       const raw = await Bun.file(filePath).text();
-      expect(JSON.parse(raw)).toEqual({ lastMode: 'host' });
-    });
-
-    it('saves both lastDevice and lastMode', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      const adapter = new JsonStateAdapter(filePath);
-      await adapter.save({ lastDevice: 'Controller', lastMode: 'join' });
-      const raw = await Bun.file(filePath).text();
-      expect(JSON.parse(raw)).toEqual({ lastDevice: 'Controller', lastMode: 'join' });
-    });
-
-    it('saves and loads lastMode round-trip', async () => {
-      const filePath = join(tmpDir, 'state.json');
-      const adapter = new JsonStateAdapter(filePath);
-      await adapter.save({ lastMode: 'local' });
-      const state = await adapter.load();
-      expect(state.lastMode).toBe('local');
+      expect(JSON.parse(raw)).toEqual({ lastDevice: 'Controller' });
     });
   });
 });

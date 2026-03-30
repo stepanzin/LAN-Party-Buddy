@@ -1,6 +1,5 @@
+import type { AppMode } from '@domain/config';
 import type { MidiDevice } from './device-discovery.port';
-
-export type WelcomeChoice = 'local' | 'host' | 'join';
 
 export interface UserInterfacePort {
   // Lifecycle
@@ -9,7 +8,7 @@ export interface UserInterfacePort {
   waitForExit(): Promise<void>;
 
   // First-run
-  showWelcome(): Promise<WelcomeChoice>;
+  showWelcome(): Promise<AppMode>;
 
   // Device selection
   selectDevice(devices: MidiDevice[]): Promise<number>;

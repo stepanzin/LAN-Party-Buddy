@@ -99,6 +99,7 @@ function createMockUI(selectedDeviceIndex = 0) {
 
 const TEST_CONFIG_YAML = `
 deviceName: "Test MIDI Output"
+mode: local
 rules:
   - cc: 4
     label: "Expression"
@@ -192,7 +193,7 @@ describe('E2E: Full Application Flow', () => {
       statePath,
     });
 
-    const runPromise = app.run(configPath, true);
+    const runPromise = app.run(configPath);
 
     // Wait for the app to wire up message handler and disconnect
     await runPromise;
@@ -272,7 +273,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // CC 4, linear 0-127 -> 0-127
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 0 });
@@ -303,7 +304,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Press CC 64, value 127 -> toggle ON -> output 127
     mockInput.simulateMessage({ channel: 0, cc: 64, value: 127 });
@@ -333,7 +334,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // CC 11 has smoothing=3. Send 3 values: 60, 90, 120
     // Buffer after each:
@@ -367,7 +368,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // CC 1 has a macro that also outputs to CC 74.
     // CC 1 has no dedicated rule, so it passes through unmapped.
@@ -395,7 +396,7 @@ describe('E2E: Full Application Flow', () => {
 
     const nonexistentPath = join(tmpDir, 'does-not-exist.yaml');
 
-    await expect(app.run(nonexistentPath, true)).rejects.toThrow();
+    await expect(app.run(nonexistentPath)).rejects.toThrow();
   });
 
   // -----------------------------------------------------------------------
@@ -406,7 +407,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Mix of different CCs
     mockInput.simulateMessage({ channel: 0, cc: 4, value: 50 }); // expression
@@ -443,7 +444,7 @@ describe('E2E: Full Application Flow', () => {
       statePath,
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Verify state file was created in nested path
     const stateAdapter = new JsonStateAdapter(statePath);
@@ -459,7 +460,7 @@ describe('E2E: Full Application Flow', () => {
       connectionChecks: [false],
     });
 
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // CC 80 is not in any rule or macro
     mockInput.simulateMessage({ channel: 0, cc: 80, value: 42 });
@@ -473,5 +474,48 @@ describe('E2E: Full Application Flow', () => {
     // UI should have logged it
     expect(ui.mappingLogs).toHaveLength(1);
     expect(ui.mappingLogs[0]).toEqual({ cc: 80, original: 42, mapped: 42 });
+  });
+
+  // -----------------------------------------------------------------------
+
+  it('first-run: empty config with no rules starts without crashing', async () => {
+    const emptyConfigPath = join(tmpDir, 'empty-config.yaml');
+    // Simulate what index.ts does after welcome: write a minimal config
+    const realConfigWriter = new (await import('@adapters/yaml-config.adapter')).YamlConfigWriterAdapter();
+    await realConfigWriter.save(emptyConfigPath, { deviceName: 'LAN Party Buddy Output', mode: 'local', rules: [] });
+
+    const mockInput = createMockMidiInput();
+    const mockOutput = createMockMidiOutput();
+    const discovery = createMockDeviceDiscovery([DEVICES, []], [false]);
+    const ui = createMockUI(0);
+    const configAdapter = new YamlConfigAdapter();
+
+    const deps: MidiMapperDeps = {
+      midiInput: mockInput.input,
+      midiOutput: mockOutput.port,
+      deviceDiscovery: discovery,
+      ui: ui.port,
+      configReader: configAdapter,
+      configWriter: realConfigWriter,
+      stateStore: new JsonStateAdapter(join(tmpDir, 'state.json')),
+    };
+
+    const app = new MidiMapperApp(deps, 10);
+
+    await app.run(emptyConfigPath);
+
+    // Config file exists and is valid
+    const content = await Bun.file(emptyConfigPath).text();
+    expect(content).toContain('deviceName');
+    expect(content).toContain('rules');
+
+    // App started and ran (showError for no devices on 2nd iteration)
+    expect(ui.port.showError).toHaveBeenCalled();
+
+    // MIDI messages pass through even with empty rules
+    mockInput.simulateMessage({ channel: 0, cc: 1, value: 100 });
+    const cc1Outputs = mockOutput.sentMessages.filter((m) => m[1] === 1);
+    expect(cc1Outputs.length).toBeGreaterThanOrEqual(1);
+    expect(cc1Outputs[0]).toEqual([0xb0, 1, 100]);
   });
 });

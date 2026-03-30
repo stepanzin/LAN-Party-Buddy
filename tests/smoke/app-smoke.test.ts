@@ -98,6 +98,7 @@ type MockDepsOverrides = Partial<{
 function createMockDeps(overrides: MockDepsOverrides = {}) {
   const defaultConfig: AppConfig = {
     deviceName: 'SmokeTest Output',
+    mode: 'local',
     rules: [
       { cc: 1, label: 'Mod Wheel', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
     ],
@@ -136,7 +137,7 @@ describe('Smoke: MidiMapperApp', () => {
     const app = new MidiMapperApp(deps, 10);
 
     // Should not throw
-    await app.run('config.yaml', true);
+    await app.run('config.yaml');
 
     expect(ui.showError).toHaveBeenCalledWith('No MIDI input devices found. Connect a device and try again.');
   });
@@ -169,7 +170,7 @@ describe('Smoke: MidiMapperApp', () => {
     const app = new MidiMapperApp(deps, 10);
 
     // Should not throw when loading and running with real config.yaml
-    await app.run(configPath, true);
+    await app.run(configPath);
 
     // Verify it actually opened ports (config was loaded and processed)
     expect(midiInput.input.open).toHaveBeenCalledWith(0);
@@ -179,6 +180,7 @@ describe('Smoke: MidiMapperApp', () => {
   it('handles config with all feature types (curves, smoothing, toggle, macros, invert)', async () => {
     const fullConfig: AppConfig = {
       deviceName: 'Full Feature Test',
+      mode: 'local',
       rules: [
         { cc: 1, label: 'Linear', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' as const },
         {
@@ -244,7 +246,7 @@ describe('Smoke: MidiMapperApp', () => {
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui, configReader });
     const app = new MidiMapperApp(deps, 10);
 
-    await app.run('config.yaml', true);
+    await app.run('config.yaml');
 
     // Send messages through each rule and the macro
     const testMessages = [
@@ -282,7 +284,7 @@ describe('Smoke: MidiMapperApp', () => {
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui });
     const app = new MidiMapperApp(deps, 10);
 
-    await app.run('config.yaml', true);
+    await app.run('config.yaml');
 
     // Fire 100 messages rapidly
     for (let i = 0; i < 100; i++) {
@@ -313,7 +315,7 @@ describe('Smoke: MidiMapperApp', () => {
     const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui, stateStore });
     const app = new MidiMapperApp(deps, 10);
 
-    await app.run('config.yaml', true);
+    await app.run('config.yaml');
 
     // Verify disconnect warning was shown
     expect(ui.showWarning).toHaveBeenCalledWith('Device "Test Controller" disconnected.');
@@ -328,5 +330,26 @@ describe('Smoke: MidiMapperApp', () => {
 
     // Verify the second iteration exited cleanly via "no devices" path
     expect(ui.showError).toHaveBeenCalledWith('No MIDI input devices found. Connect a device and try again.');
+  });
+
+  it('first-run with empty config does not crash', async () => {
+    const configReader = createMockConfigReader({
+      deviceName: 'LAN Party Buddy Output',
+      mode: 'local',
+      rules: [],
+    });
+    const midiInput = createMockMidiInput();
+    const midiOutput = createMockMidiOutput();
+    const deviceDiscovery = createMockDeviceDiscovery([DEVICES, []], [false]);
+    const ui = createMockUI(0);
+
+    const { deps } = createMockDeps({ midiInput, midiOutput, deviceDiscovery, ui, configReader });
+    const app = new MidiMapperApp(deps, 10);
+
+    await app.run('config.yaml');
+
+    // Should process messages even without rules (passthrough)
+    midiInput.simulateMessage({ channel: 0, cc: 42, value: 100 });
+    expect(ui.logMapping).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,7 +1,8 @@
+import type { AppMode } from '@domain/config';
 import type { ConfigEditorPort } from '@ports/config-editor.port';
 import type { MidiDevice } from '@ports/device-discovery.port';
 import type { MonitorPort } from '@ports/monitor.port';
-import type { UserInterfacePort, WelcomeChoice } from '@ports/user-interface.port';
+import type { UserInterfacePort } from '@ports/user-interface.port';
 import { render } from 'ink';
 import React from 'react';
 import { App } from './app';
@@ -20,6 +21,9 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
   // --- Lifecycle ---
 
   start(): void {
+    // Clear terminal and use alternate screen buffer for clean TUI
+    process.stdout.write('\x1b[2J\x1b[H');
+
     const { unmount, waitUntilExit } = render(
       React.createElement(App, {
         store: this.store,
@@ -40,12 +44,14 @@ export class InkTuiAdapter implements UserInterfacePort, MonitorPort {
 
   // --- First-run ---
 
-  showWelcome(): Promise<WelcomeChoice> {
+  showWelcome(): Promise<AppMode> {
     return new Promise((resolveChoice) => {
       const { unmount } = render(
         React.createElement(WelcomeScreen, {
-          onSelect: (choice: WelcomeChoice) => {
+          onSelect: (choice: AppMode) => {
             unmount();
+            // Clear terminal after welcome screen
+            process.stdout.write('\x1b[2J\x1b[H');
             resolveChoice(choice);
           },
         }),

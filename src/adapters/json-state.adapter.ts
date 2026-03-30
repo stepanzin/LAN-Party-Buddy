@@ -21,10 +21,6 @@ export class JsonStateAdapter implements StateStorePort {
       if (typeof parsed.lastDevice === 'string') {
         result.lastDevice = parsed.lastDevice;
       }
-      const validModes = ['local', 'host', 'join'];
-      if (typeof parsed.lastMode === 'string' && validModes.includes(parsed.lastMode)) {
-        result.lastMode = parsed.lastMode;
-      }
       return result as AppState;
     } catch {
       return {};
@@ -36,9 +32,6 @@ export class JsonStateAdapter implements StateStorePort {
     const data: Record<string, string> = {};
     if (state.lastDevice !== undefined) {
       data.lastDevice = state.lastDevice;
-    }
-    if (state.lastMode !== undefined) {
-      data.lastMode = state.lastMode;
     }
     await Bun.write(this.path, JSON.stringify(data));
   }

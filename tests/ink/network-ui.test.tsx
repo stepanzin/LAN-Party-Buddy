@@ -149,7 +149,7 @@ describe('Network UI', () => {
 
       const frame = lastFrame();
       // Network section only appears when connectedHost is set
-      expect(frame).toContain('Virtual MIDI Port');
+      expect(frame).toContain('Mode:');
       unmount();
     });
   });
@@ -162,7 +162,7 @@ describe('Network UI', () => {
       await tick();
 
       const frame = lastFrame();
-      expect(frame).toContain('Virtual MIDI Port');
+      expect(frame).toContain('Mode:');
       // Should not show any network-related info in settings for local mode
       expect(frame).not.toContain('Network');
       unmount();

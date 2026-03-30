@@ -123,6 +123,7 @@ function createMockBrowser(host: string, port: number) {
 // Config YAML templates
 const HOST_PASSTHROUGH_CONFIG = `
 deviceName: "Host Output"
+mode: host
 rules:
   - cc: 4
     label: "Expression"
@@ -135,6 +136,7 @@ rules:
 
 const HOST_SCALED_CONFIG = `
 deviceName: "Host Scaled"
+mode: host
 rules:
   - cc: 4
     label: "Scaled Expression"
@@ -147,6 +149,7 @@ rules:
 
 const JOIN_PASSTHROUGH_CONFIG = `
 deviceName: "Join Output"
+mode: join
 rules:
   - cc: 4
     label: "Expression"
@@ -159,6 +162,7 @@ rules:
 
 const JOIN_INVERT_CONFIG = `
 deviceName: "Join Inverted"
+mode: join
 rules:
   - cc: 4
     label: "Inverted"
@@ -224,7 +228,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     // pollIntervalMs very high so the device loop doesn't auto-disconnect
     const app = new MidiMapperApp(deps, 999999);
     // Start app in background (it runs the device loop forever)
-    const runPromise = app.run(configPath, true);
+    const runPromise = app.run(configPath);
 
     // Give it a moment to wire up handlers
     await wait(50);
@@ -262,7 +266,7 @@ describe('E2E: Host -> Join Network Flow', () => {
     };
 
     const app = new MidiMapperApp(deps, 999999);
-    const runPromise = app.run(configPath, true);
+    const runPromise = app.run(configPath);
 
     // Wait for TCP connection to establish
     await wait(150);

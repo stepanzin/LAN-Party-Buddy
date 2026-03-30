@@ -100,6 +100,7 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
     // Build a config with a macro: CC 1 input -> CC 74 and CC 71 outputs
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [{ cc: 1, label: 'Mod Wheel', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'linear' }],
       macros: [
         {
@@ -141,6 +142,7 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
   it('processes exponential curve correctly end-to-end', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         { cc: 10, label: 'Exp Test', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 'exponential' },
       ],
@@ -166,6 +168,7 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
   it('processes s-curve correctly end-to-end', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         { cc: 10, label: 'S-Curve Test', inputMin: 0, inputMax: 127, outputMin: 0, outputMax: 127, curve: 's-curve' },
       ],
@@ -191,6 +194,7 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
   it('inversion reverses output direction', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 10,
@@ -222,6 +226,7 @@ describe('Integration: Config -> Rule Compiler -> Engine', () => {
   it('dead zone overrides input range', () => {
     const config: AppConfig = {
       deviceName: 'Test',
+      mode: 'local',
       rules: [
         {
           cc: 10,
