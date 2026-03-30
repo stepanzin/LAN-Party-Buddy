@@ -170,7 +170,7 @@ describe('E2E: Host -> Join Network Flow', () => {
   const clients: TcpClient[] = [];
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-host-join-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-host-join-'));
   });
 
   afterEach(async () => {

@@ -7,7 +7,7 @@ import { JsonStateAdapter } from '../../src/adapters/json-state.adapter';
 let tmpDir: string;
 
 beforeEach(async () => {
-  tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-state-'));
+  tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-state-'));
 });
 
 afterEach(async () => {

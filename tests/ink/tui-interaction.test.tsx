@@ -278,9 +278,9 @@ describe('TUI Interaction: ink-testing-library', () => {
   // -----------------------------------------------------------------------
 
   describe('header', () => {
-    it('shows MIDI Mapper title', () => {
+    it('shows LAN Party Buddy title', () => {
       const { lastFrame, unmount } = renderApp();
-      expect(lastFrame()).toContain('MIDI Mapper');
+      expect(lastFrame()).toContain('LAN Party Buddy');
       unmount();
     });
 

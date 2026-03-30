@@ -11,7 +11,7 @@ export class MdnsBrowserDiscoveryAdapter implements DeviceDiscoveryPort {
   }
 
   startBrowsing(): void {
-    this.browser = this.bonjour.find({ type: 'midi-mapper' });
+    this.browser = this.bonjour.find({ type: 'lan-party-buddy' });
     this.browser.on('up', (service: RemoteService) => {
       if (!this.services.some(s => s.name === service.name)) {
         this.services.push(service);

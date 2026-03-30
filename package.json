@@ -1,11 +1,11 @@
 {
-  "name": "midi-mapper-bun",
+  "name": "lan-party-buddy",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
-    "compile": "bun build ./src/index.ts --compile --outfile build/midi-mapper"
+    "compile": "bun build ./src/index.ts --compile --outfile build/lan-party-buddy"
   },
   "devDependencies": {
     "@types/bun": "latest",

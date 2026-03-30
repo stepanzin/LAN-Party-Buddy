@@ -43,7 +43,7 @@ const { path: configPath, exists: configExists } = findConfigPath(args.config);
 const configWriter = new YamlConfigWriterAdapter();
 const store = new TuiStore();
 const editorService = new ConfigEditorService(
-  { deviceName: 'MIDI Mapper Output', rules: [] },
+  { deviceName: 'LAN Party Buddy Output', rules: [] },
   configWriter,
 );
 editorService.onConfigChanged = (c) => store.setConfig(c);
@@ -89,11 +89,11 @@ if (mode === 'host') {
   });
 
   const advertiser = new MdnsAdvertiserAdapter();
-  advertiser.advertise(DEFAULT_PORT, 'MIDI Mapper', false);
+  advertiser.advertise(DEFAULT_PORT, 'LAN Party Buddy', false);
 
   store.setHostInfo(DEFAULT_PORT, null, 'open');
 
-  midiInput = new VirtualPortInputAdapter('MIDI Mapper Input');
+  midiInput = new VirtualPortInputAdapter('LAN Party Buddy Input');
   midiOutput = new TcpBroadcastOutputAdapter(tcpServer);
   deviceDiscovery = new StaticDeviceDiscoveryAdapter('Virtual Port (Host Mode)');
 

@@ -108,7 +108,7 @@ describe('E2E: TUI Flow (InkTuiAdapter + TuiStore + Monitor + ConfigEditor)', ()
   let configPath: string;
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-tui-e2e-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-tui-e2e-'));
     configPath = join(tmpDir, 'config.yaml');
     await Bun.write(configPath, TEST_CONFIG_YAML);
   });

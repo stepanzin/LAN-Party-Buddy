@@ -136,7 +136,7 @@ describe('E2E: Full Application Flow', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'midi-mapper-e2e-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'lan-party-buddy-e2e-'));
     await Bun.write(join(tmpDir, 'test-config.yaml'), TEST_CONFIG_YAML);
   });
 

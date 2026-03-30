@@ -78,7 +78,7 @@ export function App({ store, configEditor }: Props) {
           {/* Header */}
           <Box borderStyle="round" paddingX={1} justifyContent="space-between">
             <Box>
-              <Text bold>MIDI Mapper</Text>
+              <Text bold>LAN Party Buddy</Text>
               <Text color="gray"> [{state.mode.toUpperCase()}]</Text>
               {state.device && (
                 <Text color="gray"> → {state.device}</Text>

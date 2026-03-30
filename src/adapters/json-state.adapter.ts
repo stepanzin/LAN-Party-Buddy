@@ -7,7 +7,7 @@ export class JsonStateAdapter implements StateStorePort {
   private path: string;
 
   constructor(path?: string) {
-    this.path = path ?? join(homedir(), '.midi-mapper', 'state.json');
+    this.path = path ?? join(homedir(), '.lan-party-buddy', 'state.json');
   }
 
   async load(): Promise<AppState> {

@@ -177,7 +177,7 @@ describe('Smoke: MidiMapperApp', () => {
 
     // Verify it actually opened ports (config was loaded and processed)
     expect(midiInput.input.open).toHaveBeenCalledWith(0);
-    expect(midiOutput.openVirtual).toHaveBeenCalledWith('MIDI Mapper Output');
+    expect(midiOutput.openVirtual).toHaveBeenCalledWith('LAN Party Buddy Output');
   });
 
   it('handles config with all feature types (curves, smoothing, toggle, macros, invert)', async () => {

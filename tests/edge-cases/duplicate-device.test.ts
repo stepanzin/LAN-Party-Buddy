@@ -132,11 +132,11 @@ describe('Edge: Duplicate virtual MIDI port names', () => {
   });
 
   it('no false positive when port names are similar but not identical', () => {
-    const mockMidi = createMockMidi(['MIDI Mapper Output'], []);
+    const mockMidi = createMockMidi(['LAN Party Buddy Output'], []);
     const probe = new mockMidi.Output();
     let found = false;
     for (let i = 0; i < probe.getPortCount(); i++) {
-      if (probe.getPortName(i) === 'MIDI Mapper Output 2') {
+      if (probe.getPortName(i) === 'LAN Party Buddy Output 2') {
         found = true;
         break;
       }

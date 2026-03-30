@@ -14,7 +14,7 @@ import { processMidiMessage, INITIAL_ENGINE_STATE, type EngineState } from '../d
 import type { MidiCC } from '../domain/midi-message.ts';
 
 const DEFAULT_CONFIG: AppConfig = {
-  deviceName: 'MIDI Mapper Output',
+  deviceName: 'LAN Party Buddy Output',
   rules: [],
 };
 

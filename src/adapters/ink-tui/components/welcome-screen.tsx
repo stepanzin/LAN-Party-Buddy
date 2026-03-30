@@ -13,7 +13,7 @@ type Props = {
   onSelect: (choice: WelcomeChoice) => void;
 };
 
-const ASCII_TITLE = figlet.textSync('MIDI Mapper', { font: 'Calvin S' });
+const ASCII_TITLE = figlet.textSync('LAN Party Buddy', { font: 'Calvin S' });
 
 const MENU_ITEMS = [
   { key: 'local' as const, label: 'Local Mode', desc: 'Controller \u2192 Mapper \u2192 Virtual Port', available: true },

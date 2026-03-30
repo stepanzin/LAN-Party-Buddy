@@ -1,7 +1,7 @@
-# MIDI Mapper Bun
+# LAN Party Buddy
 
 ## Project Overview
-CLI MIDI mapper: reads CC messages from hardware MIDI controllers, applies configurable value transformations, outputs to a virtual MIDI port for DAW integration.
+LAN Party Buddy: a CLI MIDI mapper with 3 modes (local, host, join). Reads CC messages from hardware MIDI controllers, applies configurable value transformations, and outputs to a virtual MIDI port for DAW integration. In host mode it broadcasts mapped MIDI over the network; in join mode it receives from a host and outputs locally.
 
 ## Tech Stack
 - **Runtime**: Bun 1.3.3+
@@ -41,7 +41,7 @@ src/
     julusian-midi.adapter.ts            — MidiInput + MidiOutput + DeviceDiscovery
     inquirer-cli.adapter.ts             — UserInterface (CLI)
     yaml-config.adapter.ts              — ConfigReader (YAML)
-    json-state.adapter.ts               — StateStore (~/.midi-mapper/state.json)
+    json-state.adapter.ts               — StateStore (~/.lan-party-buddy/state.json)
 
   app/
     midi-mapper.app.ts                  — orchestrator: config → device loop → mapping
