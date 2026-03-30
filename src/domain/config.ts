@@ -31,8 +31,15 @@ export type MacroConfig = {
   readonly outputs: readonly MacroOutput[];
 };
 
+export type NetworkConfig = {
+  readonly port?: number;        // TCP port, default 9900
+  readonly pin?: string;         // 4-char PIN string, undefined = open
+  readonly hostName?: string;    // mDNS advertised name
+};
+
 export type AppConfig = {
   readonly deviceName: string;
   readonly rules: readonly RuleConfig[];
   readonly macros?: readonly MacroConfig[];
+  readonly network?: NetworkConfig;
 };

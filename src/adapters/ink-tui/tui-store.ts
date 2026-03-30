@@ -41,6 +41,18 @@ export type TuiState = {
   messageCount: number;
   startTime: number;
 
+  // Network mode
+  mode: 'local' | 'host' | 'join';
+
+  // Host mode
+  hostPort: number | null;
+  hostPin: string | null;
+  hostAccessMode: 'open' | 'pin';
+  connectedClients: Array<{ id: string; address: string; connectedAt: number }>;
+
+  // Join mode
+  connectedHost: { name: string; address: string; port: number } | null;
+
   // Monitor
   activities: ActivityEntry[];        // ring buffer, max 20
   macroActivities: MacroActivityEntry[];
@@ -78,6 +90,12 @@ export class TuiStore extends EventEmitter {
       connected: false,
       messageCount: 0,
       startTime: Date.now(),
+      mode: 'local',
+      hostPort: null,
+      hostPin: null,
+      hostAccessMode: 'open',
+      connectedClients: [],
+      connectedHost: null,
       activities: [],
       macroActivities: [],
       unmapped: new Map(),
@@ -198,5 +216,31 @@ export class TuiStore extends EventEmitter {
   resolveDeviceSelection(index: number): void {
     this.state.deviceSelectionResolver?.(index);
     this.update({ deviceSelectionDevices: null, deviceSelectionResolver: null });
+  }
+
+  // Network mode
+  setMode(mode: 'local' | 'host' | 'join'): void {
+    this.update({ mode });
+  }
+
+  setHostInfo(port: number, pin: string | null, accessMode: 'open' | 'pin'): void {
+    this.update({ hostPort: port, hostPin: pin, hostAccessMode: accessMode });
+  }
+
+  addClient(client: { id: string; address: string }): void {
+    const connectedClients = [
+      ...this.state.connectedClients,
+      { ...client, connectedAt: Date.now() },
+    ];
+    this.update({ connectedClients });
+  }
+
+  removeClient(clientId: string): void {
+    const connectedClients = this.state.connectedClients.filter(c => c.id !== clientId);
+    this.update({ connectedClients });
+  }
+
+  setConnectedHost(host: { name: string; address: string; port: number } | null): void {
+    this.update({ connectedHost: host });
   }
 }

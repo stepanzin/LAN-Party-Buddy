@@ -1,7 +1,7 @@
 import { parse as parseYaml, stringify as yamlStringify } from 'yaml';
 import type { ConfigReaderPort } from '../ports/config-reader.port';
 import type { ConfigWriterPort } from '../ports/config-writer.port';
-import type { AppConfig, Curve, MacroConfig, MacroOutput, RuleConfig } from '../domain/config';
+import type { AppConfig, Curve, MacroConfig, MacroOutput, NetworkConfig, RuleConfig } from '../domain/config';
 
 const VALID_CURVES: readonly Curve[] = ['linear', 'logarithmic', 'exponential', 's-curve'];
 const VALID_MODES = ['normal', 'toggle'] as const;
@@ -161,6 +161,38 @@ function validateMacro(raw: unknown, index: number): MacroConfig {
   };
 }
 
+function validateNetwork(raw: unknown): NetworkConfig {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    throw new Error('network: must be an object');
+  }
+
+  const n = raw as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  if (n.port !== undefined) {
+    if (typeof n.port !== 'number' || !Number.isInteger(n.port) || n.port <= 0 || n.port >= 65536) {
+      throw new Error('network.port: must be an integer > 0 and < 65536');
+    }
+    result.port = n.port;
+  }
+
+  if (n.pin !== undefined) {
+    if (typeof n.pin !== 'string' || n.pin.length !== 4) {
+      throw new Error('network.pin: must be a string of exactly 4 characters');
+    }
+    result.pin = n.pin;
+  }
+
+  if (n.hostName !== undefined) {
+    if (typeof n.hostName !== 'string' || n.hostName.length === 0) {
+      throw new Error('network.hostName: must be a non-empty string');
+    }
+    result.hostName = n.hostName;
+  }
+
+  return result as NetworkConfig;
+}
+
 export function parseConfig(yamlContent: string): AppConfig {
   let doc: unknown;
   try {
@@ -199,6 +231,10 @@ export function parseConfig(yamlContent: string): AppConfig {
       throw new Error('macros must be an array');
     }
     (result as Record<string, unknown>).macros = obj.macros.map((raw: unknown, i: number) => validateMacro(raw, i));
+  }
+
+  if (obj.network !== undefined) {
+    (result as Record<string, unknown>).network = validateNetwork(obj.network);
   }
 
   return result;

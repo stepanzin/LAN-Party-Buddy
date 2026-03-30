@@ -16,8 +16,9 @@ type Props = {
 const ASCII_TITLE = figlet.textSync('MIDI Mapper', { font: 'Calvin S' });
 
 const MENU_ITEMS = [
-  { key: 'mapper' as const, label: 'MIDI Signal Mapper', desc: 'Map physical MIDI controller signals to virtual output', available: true },
-  { key: 'virtual' as const, label: 'Virtual MIDI Device', desc: 'Standalone virtual MIDI device (no physical controller)', available: false },
+  { key: 'local' as const, label: 'Local Mode', desc: 'Controller \u2192 Mapper \u2192 Virtual Port', available: true },
+  { key: 'host' as const, label: 'Host Mode', desc: 'Virtual Port \u2192 Mapper \u2192 Network broadcast', available: true },
+  { key: 'join' as const, label: 'Join Mode', desc: 'Network \u2192 Mapper \u2192 Virtual Port', available: true },
 ];
 
 export function WelcomeScreen({ onSelect }: Props) {

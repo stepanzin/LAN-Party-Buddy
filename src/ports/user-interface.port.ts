@@ -1,6 +1,6 @@
 import type { MidiDevice } from './device-discovery.port';
 
-export type WelcomeChoice = 'mapper' | 'virtual';
+export type WelcomeChoice = 'local' | 'host' | 'join';
 
 export interface UserInterfacePort {
   // Lifecycle

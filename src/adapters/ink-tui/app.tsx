@@ -9,6 +9,8 @@ import { EditorTab } from './components/editor-tab';
 import { LogTab } from './components/log-tab';
 import { SettingsTab } from './components/settings-tab';
 import { DeviceSelector } from './components/device-selector';
+import { HostStatus } from './components/host-status';
+import { JoinStatus } from './components/join-status';
 
 type Props = {
   store: TuiStore;
@@ -77,6 +79,7 @@ export function App({ store, configEditor }: Props) {
           <Box borderStyle="round" paddingX={1} justifyContent="space-between">
             <Box>
               <Text bold>MIDI Mapper</Text>
+              <Text color="gray"> [{state.mode.toUpperCase()}]</Text>
               {state.device && (
                 <Text color="gray"> → {state.device}</Text>
               )}
@@ -86,6 +89,8 @@ export function App({ store, configEditor }: Props) {
               <Text color="gray">↑{state.messageCount}msg  {mins}m{secs.toString().padStart(2, '0')}s</Text>
             </Box>
           </Box>
+          {state.mode === 'host' && <HostStatus />}
+          {state.mode === 'join' && <JoinStatus />}
 
           {/* Tab bar */}
           <Box gap={2} paddingX={1}>

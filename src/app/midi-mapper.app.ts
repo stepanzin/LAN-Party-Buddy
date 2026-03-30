@@ -44,12 +44,9 @@ export class MidiMapperApp {
   }
 
   async run(configPath: string, configExists: boolean): Promise<void> {
-    // First-run: show welcome, create default config
+    // First-run: create default config (mode already selected in bootstrap)
     if (!configExists) {
-      const choice = await this.deps.ui.showWelcome();
-      if (choice === 'mapper') {
-        await this.deps.configWriter.save(configPath, DEFAULT_CONFIG);
-      }
+      await this.deps.configWriter.save(configPath, DEFAULT_CONFIG);
     }
 
     const config = await this.deps.configReader.load(configPath);

@@ -8,10 +8,27 @@ import { JulusianMidiInputAdapter, JulusianMidiOutputAdapter, JulusianDeviceDisc
 import { InkTuiAdapter } from './adapters/ink-tui/ink-tui.adapter';
 import { TuiStore } from './adapters/ink-tui/tui-store';
 import { ConfigEditorService } from './app/config-editor.service';
+import type { MidiInputPort } from './ports/midi-input.port';
+import type { MidiOutputPort } from './ports/midi-output.port';
+import type { DeviceDiscoveryPort } from './ports/device-discovery.port';
+import type { WelcomeChoice } from './ports/user-interface.port';
+
+// Network adapters
+import { TcpServer } from './adapters/network/tcp-server';
+import { TcpClient } from './adapters/network/tcp-client';
+import { TcpBroadcastOutputAdapter } from './adapters/network/tcp-broadcast-output.adapter';
+import { TcpClientInputAdapter } from './adapters/network/tcp-client-input.adapter';
+import { VirtualPortInputAdapter } from './adapters/network/virtual-port-input.adapter';
+import { StaticDeviceDiscoveryAdapter } from './adapters/network/static-device-discovery.adapter';
+import { MdnsAdvertiserAdapter } from './adapters/network/mdns-advertiser.adapter';
+import { MdnsBrowserDiscoveryAdapter } from './adapters/network/mdns-browser-discovery.adapter';
 
 const { values: args } = parseArgs({
   args: Bun.argv.slice(2),
-  options: { config: { type: 'string', short: 'c' } },
+  options: {
+    config: { type: 'string', short: 'c' },
+    mode: { type: 'string', short: 'm' },
+  },
 });
 
 function findConfigPath(explicit?: string): { path: string; exists: boolean } {
@@ -30,13 +47,92 @@ const editorService = new ConfigEditorService(
   configWriter,
 );
 editorService.onConfigChanged = (c) => store.setConfig(c);
-
 const tuiAdapter = new InkTuiAdapter(store, editorService);
 
+// Load state to check for saved mode
+const stateStore = new JsonStateAdapter();
+const savedState = await stateStore.load();
+
+// Determine mode: CLI arg > saved mode > welcome screen > local default
+let mode: WelcomeChoice;
+if (args.mode && ['local', 'host', 'join'].includes(args.mode)) {
+  mode = args.mode as WelcomeChoice;
+} else if (savedState.lastMode) {
+  mode = savedState.lastMode;
+} else if (!configExists) {
+  mode = await tuiAdapter.showWelcome();
+} else {
+  mode = 'local'; // default for existing config
+}
+
+// Save selected mode to state
+await stateStore.save({ ...savedState, lastMode: mode });
+
+store.setMode(mode);
+
+// Wire adapters based on mode
+let midiInput: MidiInputPort;
+let midiOutput: MidiOutputPort;
+let deviceDiscovery: DeviceDiscoveryPort;
+let cleanupNetwork = () => {};
+
+const DEFAULT_PORT = 9900;
+
+if (mode === 'host') {
+  const tcpServer = new TcpServer();
+  tcpServer.start(DEFAULT_PORT);
+  tcpServer.on('clientConnected', (id: string, address: string) => {
+    store.addClient({ id, address });
+  });
+  tcpServer.on('clientDisconnected', (id: string) => {
+    store.removeClient(id);
+  });
+
+  const advertiser = new MdnsAdvertiserAdapter();
+  advertiser.advertise(DEFAULT_PORT, 'MIDI Mapper', false);
+
+  store.setHostInfo(DEFAULT_PORT, null, 'open');
+
+  midiInput = new VirtualPortInputAdapter('MIDI Mapper Input');
+  midiOutput = new TcpBroadcastOutputAdapter(tcpServer);
+  deviceDiscovery = new StaticDeviceDiscoveryAdapter('Virtual Port (Host Mode)');
+
+  cleanupNetwork = () => {
+    tcpServer.stop();
+    advertiser.destroy();
+  };
+} else if (mode === 'join') {
+  const browser = new MdnsBrowserDiscoveryAdapter();
+  browser.startBrowsing();
+
+  const tcpClient = new TcpClient();
+  tcpClient.on('connected', () => {
+    store.setConnectionStatus(true);
+  });
+  tcpClient.on('disconnected', () => {
+    store.setConnectionStatus(false);
+    store.setConnectedHost(null);
+  });
+
+  midiInput = new TcpClientInputAdapter(tcpClient, browser);
+  midiOutput = new JulusianMidiOutputAdapter();
+  deviceDiscovery = browser;
+
+  cleanupNetwork = () => {
+    tcpClient.disconnect();
+    browser.destroy();
+  };
+} else {
+  // Local mode
+  midiInput = new JulusianMidiInputAdapter();
+  midiOutput = new JulusianMidiOutputAdapter();
+  deviceDiscovery = new JulusianDeviceDiscoveryAdapter();
+}
+
 const app = new MidiMapperApp({
-  midiInput: new JulusianMidiInputAdapter(),
-  midiOutput: new JulusianMidiOutputAdapter(),
-  deviceDiscovery: new JulusianDeviceDiscoveryAdapter(),
+  midiInput,
+  midiOutput,
+  deviceDiscovery,
   ui: tuiAdapter,
   configReader: new YamlConfigAdapter(),
   configWriter,
@@ -47,8 +143,17 @@ const app = new MidiMapperApp({
 
 app.setConfigEditorService(editorService);
 
-process.on('SIGINT', () => { tuiAdapter.stop(); process.exit(0); });
-process.on('SIGTERM', () => { tuiAdapter.stop(); process.exit(0); });
+process.on('SIGINT', () => {
+  cleanupNetwork();
+  tuiAdapter.stop();
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  cleanupNetwork();
+  tuiAdapter.stop();
+  process.exit(0);
+});
 
 app.run(configPath, configExists);
 await tuiAdapter.waitForExit();
+cleanupNetwork();

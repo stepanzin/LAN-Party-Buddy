@@ -402,4 +402,113 @@ describe('TuiStore', () => {
       expect(store.getState().messageCount).toBe(3);
     });
   });
+
+  describe('network mode', () => {
+    describe('initial state', () => {
+      it('has correct network defaults', () => {
+        const store = new TuiStore();
+        const state = store.getState();
+
+        expect(state.mode).toBe('local');
+        expect(state.hostPort).toBeNull();
+        expect(state.hostPin).toBeNull();
+        expect(state.hostAccessMode).toBe('open');
+        expect(state.connectedClients).toEqual([]);
+        expect(state.connectedHost).toBeNull();
+      });
+    });
+
+    describe('setMode', () => {
+      it('changes mode to host', () => {
+        const store = new TuiStore();
+        store.setMode('host');
+        expect(store.getState().mode).toBe('host');
+      });
+
+      it('changes mode to join', () => {
+        const store = new TuiStore();
+        store.setMode('join');
+        expect(store.getState().mode).toBe('join');
+      });
+
+      it('changes mode back to local', () => {
+        const store = new TuiStore();
+        store.setMode('host');
+        store.setMode('local');
+        expect(store.getState().mode).toBe('local');
+      });
+    });
+
+    describe('setHostInfo', () => {
+      it('sets host port and open access mode', () => {
+        const store = new TuiStore();
+        store.setHostInfo(9900, null, 'open');
+        expect(store.getState().hostPort).toBe(9900);
+        expect(store.getState().hostPin).toBeNull();
+        expect(store.getState().hostAccessMode).toBe('open');
+      });
+
+      it('sets host port and pin access mode', () => {
+        const store = new TuiStore();
+        store.setHostInfo(8080, '1234', 'pin');
+        expect(store.getState().hostPort).toBe(8080);
+        expect(store.getState().hostPin).toBe('1234');
+        expect(store.getState().hostAccessMode).toBe('pin');
+      });
+    });
+
+    describe('addClient', () => {
+      it('adds a client with connectedAt timestamp', () => {
+        const store = new TuiStore();
+        store.addClient({ id: 'c1', address: '192.168.1.10' });
+        const clients = store.getState().connectedClients;
+        expect(clients).toHaveLength(1);
+        expect(clients[0].id).toBe('c1');
+        expect(clients[0].address).toBe('192.168.1.10');
+        expect(clients[0].connectedAt).toBeGreaterThan(0);
+      });
+
+      it('adds multiple clients', () => {
+        const store = new TuiStore();
+        store.addClient({ id: 'c1', address: '192.168.1.10' });
+        store.addClient({ id: 'c2', address: '192.168.1.11' });
+        expect(store.getState().connectedClients).toHaveLength(2);
+      });
+    });
+
+    describe('removeClient', () => {
+      it('removes a client by id', () => {
+        const store = new TuiStore();
+        store.addClient({ id: 'c1', address: '192.168.1.10' });
+        store.addClient({ id: 'c2', address: '192.168.1.11' });
+        store.removeClient('c1');
+        const clients = store.getState().connectedClients;
+        expect(clients).toHaveLength(1);
+        expect(clients[0].id).toBe('c2');
+      });
+
+      it('does nothing when client id does not exist', () => {
+        const store = new TuiStore();
+        store.addClient({ id: 'c1', address: '192.168.1.10' });
+        store.removeClient('nonexistent');
+        expect(store.getState().connectedClients).toHaveLength(1);
+      });
+    });
+
+    describe('setConnectedHost', () => {
+      it('sets connected host', () => {
+        const store = new TuiStore();
+        const host = { name: 'Studio PC', address: '192.168.1.5', port: 9900 };
+        store.setConnectedHost(host);
+        expect(store.getState().connectedHost).toEqual(host);
+      });
+
+      it('clears connected host when set to null', () => {
+        const store = new TuiStore();
+        store.setConnectedHost({ name: 'Studio PC', address: '192.168.1.5', port: 9900 });
+        store.setConnectedHost(null);
+        expect(store.getState().connectedHost).toBeNull();
+      });
+    });
+  });
 });

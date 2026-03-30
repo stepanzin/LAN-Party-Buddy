@@ -510,6 +510,132 @@ rules:
     });
   });
 
+  describe('valid config with network section', () => {
+    it('parses config with full network section', () => {
+      const yaml = `
+deviceName: "Out"
+rules:
+  - cc: 1
+    label: "X"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+network:
+  port: 9900
+  pin: "1234"
+  hostName: "My MIDI Mapper"
+`;
+      const config = parseConfig(yaml);
+      expect(config.network).toBeDefined();
+      expect(config.network!.port).toBe(9900);
+      expect(config.network!.pin).toBe('1234');
+      expect(config.network!.hostName).toBe('My MIDI Mapper');
+    });
+
+    it('parses config with partial network section (port only)', () => {
+      const yaml = `
+deviceName: "Out"
+rules:
+  - cc: 1
+    label: "X"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+network:
+  port: 8080
+`;
+      const config = parseConfig(yaml);
+      expect(config.network).toBeDefined();
+      expect(config.network!.port).toBe(8080);
+      expect(config.network!.pin).toBeUndefined();
+      expect(config.network!.hostName).toBeUndefined();
+    });
+
+    it('parses config without network section (backward compat)', () => {
+      const yaml = `
+deviceName: "Out"
+rules:
+  - cc: 1
+    label: "X"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+`;
+      const config = parseConfig(yaml);
+      expect(config.network).toBeUndefined();
+    });
+  });
+
+  describe('invalid network section', () => {
+    const makeNetworkYaml = (networkSection: string) => `
+deviceName: "Out"
+rules:
+  - cc: 1
+    label: "X"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+network:
+  ${networkSection}
+`;
+
+    it('throws when network.port is negative', () => {
+      expect(() => parseConfig(makeNetworkYaml('port: -1'))).toThrow(/network\.port/);
+    });
+
+    it('throws when network.port is zero', () => {
+      expect(() => parseConfig(makeNetworkYaml('port: 0'))).toThrow(/network\.port/);
+    });
+
+    it('throws when network.port is > 65535', () => {
+      expect(() => parseConfig(makeNetworkYaml('port: 65536'))).toThrow(/network\.port/);
+    });
+
+    it('throws when network.port is non-integer', () => {
+      expect(() => parseConfig(makeNetworkYaml('port: 99.5'))).toThrow(/network\.port/);
+    });
+
+    it('throws when network.pin is not 4 chars (too short)', () => {
+      expect(() => parseConfig(makeNetworkYaml('pin: "12"'))).toThrow(/network\.pin/);
+    });
+
+    it('throws when network.pin is not 4 chars (too long)', () => {
+      expect(() => parseConfig(makeNetworkYaml('pin: "12345"'))).toThrow(/network\.pin/);
+    });
+
+    it('throws when network.pin is non-string', () => {
+      expect(() => parseConfig(makeNetworkYaml('pin: 1234'))).toThrow(/network\.pin/);
+    });
+
+    it('throws when network.hostName is empty string', () => {
+      expect(() => parseConfig(makeNetworkYaml('hostName: ""'))).toThrow(/network\.hostName/);
+    });
+
+    it('throws when network is not an object', () => {
+      const yaml = `
+deviceName: "Out"
+rules:
+  - cc: 1
+    label: "X"
+    inputMin: 0
+    inputMax: 127
+    outputMin: 0
+    outputMax: 127
+    curve: linear
+network: "not an object"
+`;
+      expect(() => parseConfig(yaml)).toThrow(/network/);
+    });
+  });
+
   describe('invalid macros', () => {
     const baseMacroYaml = (macroSection: string) => `
 deviceName: "Out"

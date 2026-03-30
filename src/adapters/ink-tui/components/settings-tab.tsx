@@ -78,6 +78,20 @@ export function SettingsTab() {
           </Box>
         )}
       </Box>
+      {state.mode === 'host' && (
+        <Box marginTop={1} flexDirection="column">
+          <Text bold>Network</Text>
+          <Text>Port:      <Text color="cyan">{state.hostPort ?? 9900}</Text></Text>
+          <Text>Access:    <Text color="cyan">{state.hostAccessMode === 'pin' ? `PIN: ${state.hostPin}` : 'Open'}</Text></Text>
+        </Box>
+      )}
+      {state.mode === 'join' && state.connectedHost && (
+        <Box marginTop={1} flexDirection="column">
+          <Text bold>Network</Text>
+          <Text>Host:      <Text color="cyan">{state.connectedHost.name}</Text></Text>
+          <Text>Address:   <Text color="cyan">{state.connectedHost.address}:{state.connectedHost.port}</Text></Text>
+        </Box>
+      )}
     </Box>
   );
 }

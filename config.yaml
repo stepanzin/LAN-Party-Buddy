@@ -27,6 +27,11 @@ rules:
     curve: linear
     mode: toggle
 
+# network:
+#   port: 9900
+#   pin: "1234"
+#   hostName: "My MIDI Mapper"
+
 # macros:
 #   - input: 1
 #     label: "Performance Macro"

@@ -105,6 +105,22 @@ export function MonitorTab() {
           <Text color="gray">  [A] Add most recent as rule</Text>
         </Box>
       )}
+
+      {/* Network */}
+      {state.mode === 'host' && state.connectedClients.length > 0 && (
+        <>
+          <Text bold dimColor>  Network</Text>
+          {state.connectedClients.map(c => (
+            <Text key={c.id} dimColor>   ● {c.address}</Text>
+          ))}
+        </>
+      )}
+      {state.mode === 'join' && state.connectedHost && (
+        <>
+          <Text bold dimColor>  Network</Text>
+          <Text dimColor>   Connected: {state.connectedHost.name} ({state.connectedHost.address})</Text>
+        </>
+      )}
     </Box>
   );
 }
