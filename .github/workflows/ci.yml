@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
@@ -26,26 +24,3 @@ jobs:
       - run: bun test --timeout 30000
         env:
           CI: true
-
-  build:
-    name: Build (${{ matrix.os }})
-    needs: [lint, test]
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact: lan-party-buddy-linux-x64
-          - os: macos-latest
-            artifact: lan-party-buddy-darwin-arm64
-          - os: windows-latest
-            artifact: lan-party-buddy-windows-x64
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install
-      - run: bun run compile
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: build/
